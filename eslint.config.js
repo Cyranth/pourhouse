@@ -1,8 +1,8 @@
-const js = require("@eslint/js");
-const tsPlugin = require("@typescript-eslint/eslint-plugin");
-const tsParser = require("@typescript-eslint/parser");
-const prettierConfig = require("eslint-config-prettier");
-const globals = require("globals");
+const js = require("@eslint/js")
+const tsPlugin = require("@typescript-eslint/eslint-plugin")
+const tsParser = require("@typescript-eslint/parser")
+const prettierConfig = require("eslint-config-prettier")
+const globals = require("globals")
 
 module.exports = [
   {
@@ -44,4 +44,4 @@ module.exports = [
     }
   },
   prettierConfig
-];
+]
