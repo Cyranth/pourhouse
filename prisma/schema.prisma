@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Wine {
+  id             String      @id @default(uuid())
+  name           String
+  vintage        Int
+  wineryId       String
+  regionId       String
+  country        String
+  grapeVarieties Json
+  alcoholPercent Float
+  description    String
+  imageUrl       String
+  createdAt      DateTime    @default(now())
+
+  winery    Winery      @relation(fields: [wineryId], references: [id], onDelete: Restrict)
+  region    Region      @relation(fields: [regionId], references: [id], onDelete: Restrict)
+  inventory Inventory[]
+  ratings   Rating[]
+
+  @@unique([name, wineryId, vintage])
+  @@index([regionId])
+  @@index([wineryId])
+}
+
+model Winery {
+  id          String @id @default(uuid())
+  name        String
+  regionId    String
+  country     String
+  website     String
+  description String
+
+  region Region @relation(fields: [regionId], references: [id], onDelete: Restrict)
+  wines  Wine[]
+
+  @@index([regionId])
+}
+
+model Region {
+  id       String  @id @default(uuid())
+  name     String
+  parentId String?
+
+  parent   Region?  @relation("RegionHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children Region[] @relation("RegionHierarchy")
+  wines    Wine[]
+  wineries Winery[]
+
+  @@index([parentId])
+}
+
+model Inventory {
+  id            String   @id @default(uuid())
+  wineId        String
+  locationId    String
+  priceGlass    Decimal  @db.Decimal(10, 2)
+  priceBottle   Decimal  @db.Decimal(10, 2)
+  stockQuantity Int
+  isAvailable   Boolean  @default(true)
+  isFeatured    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  wine Wine @relation(fields: [wineId], references: [id], onDelete: Cascade)
+
+  @@index([wineId])
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+
+  ratings Rating[]
+}
+
+model Rating {
+  id        String   @id @default(uuid())
+  userId    String
+  wineId    String
+  rating    Int
+  notes     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wine Wine @relation(fields: [wineId], references: [id], onDelete: Cascade)
+
+  @@index([wineId])
+  @@index([userId])
+}
