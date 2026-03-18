@@ -8,7 +8,9 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   JWT_SECRET: z.string().min(16, "JWT_SECRET must be at least 16 characters"),
-  JWT_EXPIRES_IN: z.string().default("7d")
+  JWT_EXPIRES_IN: z.string().default("7d"),
+  SQUARE_ACCESS_TOKEN: z.string().min(1, "SQUARE_ACCESS_TOKEN is required"),
+  SQUARE_ENVIRONMENT: z.enum(["sandbox", "production"]).default("production")
 });
 
 export const env = envSchema.parse(process.env);
