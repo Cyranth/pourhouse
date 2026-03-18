@@ -39,6 +39,7 @@ function createService() {
 
 const input: CreateWineInput = {
   name: "Cabernet",
+  slug: "cabernet-winery-1-2020",
   vintage: 2020,
   wineryId: "winery-1",
   regionId: "region-1",

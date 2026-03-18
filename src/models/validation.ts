@@ -13,6 +13,7 @@ export const loginSchema = z.object({
 
 export const createWineSchema = z.object({
   name: z.string().min(1),
+  slug: z.string().min(1),
   vintage: z.number().int().min(1900).max(2100),
   wineryId: z.string().uuid(),
   regionId: z.string().uuid(),
@@ -20,7 +21,8 @@ export const createWineSchema = z.object({
   grapeVarieties: z.array(z.string().min(1)).min(1),
   alcoholPercent: z.number().min(0).max(100),
   description: z.string().min(1),
-  imageUrl: z.string().url()
+  imageUrl: z.string().url(),
+  squareItemId: z.string().min(1).optional()
 });
 
 export const searchWineSchema = z.object({

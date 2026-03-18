@@ -6,6 +6,7 @@ import { AppError } from "@/utils/appError";
 
 export type CreateWineInput = {
   name: string;
+  slug: string;
   vintage: number;
   wineryId: string;
   regionId: string;
@@ -14,6 +15,7 @@ export type CreateWineInput = {
   alcoholPercent: number;
   description: string;
   imageUrl: string;
+  squareItemId?: string | null;
 };
 
 export class WineService {
