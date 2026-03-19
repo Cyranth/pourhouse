@@ -1,39 +1,39 @@
 function readSlugFromPath() {
-  const pathSegments = window.location.pathname.split("/").filter(Boolean);
-  return decodeURIComponent(pathSegments[pathSegments.length - 1] || "");
+  const pathSegments = window.location.pathname.split("/").filter(Boolean)
+  return decodeURIComponent(pathSegments[pathSegments.length - 1] || "")
 }
 
 function currency(value) {
   if (typeof value !== "number" || Number.isNaN(value)) {
-    return "Not available";
+    return "Not available"
   }
 
   return new Intl.NumberFormat("en-CA", {
     style: "currency",
     currency: "CAD"
-  }).format(value);
+  }).format(value)
 }
 
 function summarizePrices(inventoryRows) {
-  const prices = inventoryRows.filter((row) => row && row.isAvailable);
+  const prices = inventoryRows.filter((row) => row && row.isAvailable)
 
   const glassCandidates = prices
     .map((row) => Number(row.priceGlass))
-    .filter((price) => Number.isFinite(price) && price > 0);
+    .filter((price) => Number.isFinite(price) && price > 0)
   const bottleCandidates = prices
     .map((row) => Number(row.priceBottle))
-    .filter((price) => Number.isFinite(price) && price > 0);
+    .filter((price) => Number.isFinite(price) && price > 0)
 
   return {
     glass: glassCandidates.length > 0 ? Math.min(...glassCandidates) : null,
     bottle: bottleCandidates.length > 0 ? Math.min(...bottleCandidates) : null
-  };
+  }
 }
 
 function renderError(message) {
-  const root = document.getElementById("wine-detail-root");
+  const root = document.getElementById("wine-detail-root")
   if (!root) {
-    return;
+    return
   }
 
   root.innerHTML = `
@@ -43,16 +43,16 @@ function renderError(message) {
       <p class="description">${message}</p>
       <p class="tip">Confirm the URL slug or scan a fresh QR code.</p>
     </section>
-  `;
+  `
 }
 
 function renderWineDetail(wine) {
-  const root = document.getElementById("wine-detail-root");
+  const root = document.getElementById("wine-detail-root")
   if (!root) {
-    return;
+    return
   }
 
-  const prices = summarizePrices(Array.isArray(wine.inventory) ? wine.inventory : []);
+  const prices = summarizePrices(Array.isArray(wine.inventory) ? wine.inventory : [])
 
   root.innerHTML = `
     <article class="card">
@@ -70,34 +70,34 @@ function renderWineDetail(wine) {
         </div>
       </section>
     </article>
-  `;
+  `
 }
 
 async function loadWineBySlug() {
-  const slug = readSlugFromPath();
+  const slug = readSlugFromPath()
 
   if (!slug) {
-    renderError("Missing wine slug in URL.");
-    return;
+    renderError("Missing wine slug in URL.")
+    return
   }
 
   try {
-    const response = await fetch(`/api/wines/${encodeURIComponent(slug)}`);
+    const response = await fetch(`/api/wines/${encodeURIComponent(slug)}`)
 
     if (!response.ok) {
       if (response.status === 404) {
-        renderError("This wine could not be found.");
-        return;
+        renderError("This wine could not be found.")
+        return
       }
 
-      throw new Error(`Request failed with status ${response.status}`);
+      throw new Error(`Request failed with status ${response.status}`)
     }
 
-    const wine = await response.json();
-    renderWineDetail(wine);
+    const wine = await response.json()
+    renderWineDetail(wine)
   } catch {
-    renderError("There was a problem loading this page. Please try again shortly.");
+    renderError("There was a problem loading this page. Please try again shortly.")
   }
 }
 
-void loadWineBySlug();
+void loadWineBySlug()
