@@ -116,36 +116,63 @@ Use `.env.example` as a template:
 
 ### Wines
 
-- `GET /api/wines` - returns wines with at least one available inventory row, including winery, region, and summarized `pricing.glass` / `pricing.bottle` values
+- `GET /api/wines` - returns a paginated wine list with optional filters and summarized `pricing.glass` / `pricing.bottle` values
 - `GET /api/wines/:id`
 - `POST /api/wines`
 - `GET /api/wines/search?q=term`
 - `GET /api/wines/:id/ratings`
 
-Example `GET /api/wines` response item:
+Supported `GET /api/wines` query params:
+
+- `page` - 1-based page number, defaults to `1`
+- `pageSize` - page size between `1` and `100`, defaults to `20`
+- `sort` - `createdAt`, `name`, `priceGlass`, or `priceBottle`
+- `order` - `asc` or `desc`
+- `country` - exact country filter, case-insensitive
+- `regionId` - filter by region id
+- `wineryId` - filter by winery id
+- `featuredOnly` - `true` or `false`
+- `hasGlass` - `true` or `false`
+- `hasBottle` - `true` or `false`
+
+Example `GET /api/wines` response:
 
 ```json
 {
-  "id": "wine-id",
-  "slug": "cabernet-2020",
-  "name": "Cabernet",
-  "vintage": 2020,
-  "country": "US",
-  "description": "Bold",
-  "imageUrl": "https://example.com/wine.png",
-  "winery": {
-    "id": "winery-1",
-    "name": "Alpha Winery"
-  },
-  "region": {
-    "id": "region-1",
-    "name": "Napa Valley"
-  },
-  "pricing": {
-    "glass": 16,
-    "bottle": 68
-  }
+  "items": [
+    {
+      "id": "wine-id",
+      "slug": "cabernet-2020",
+      "name": "Cabernet",
+      "vintage": 2020,
+      "country": "US",
+      "description": "Bold",
+      "imageUrl": "https://example.com/wine.png",
+      "winery": {
+        "id": "winery-1",
+        "name": "Alpha Winery"
+      },
+      "region": {
+        "id": "region-1",
+        "name": "Napa Valley"
+      },
+      "pricing": {
+        "glass": 16,
+        "bottle": 68
+      }
+    }
+  ],
+  "page": 1,
+  "pageSize": 20,
+  "total": 1,
+  "totalPages": 1
 }
+```
+
+Example filtered request:
+
+```text
+GET /api/wines?page=1&pageSize=10&sort=priceGlass&order=asc&country=US&featuredOnly=true
 ```
 
 ### Inventory
@@ -167,6 +194,7 @@ Example `GET /api/wines` response item:
 - Inventory references wines by foreign key (`wineId`) and does not duplicate wine records.
 - Public wine list responses include only wines with available inventory.
 - Public wine list pricing is summarized from available inventory rows using the lowest available glass and bottle prices.
+- Public wine list filtering is applied in the repository layer; price sorting and pagination are applied in the service layer.
 
 ## Seed Data
 

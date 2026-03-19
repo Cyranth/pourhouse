@@ -1,25 +1,19 @@
 import type { PrismaClient, Prisma } from "@prisma/client";
-import type { IWineRepository } from "@/repositories/wine/IWineRepository";
+import type { IWineRepository, WineListFilters } from "@/repositories/wine/IWineRepository";
 
 export class WineRepository implements IWineRepository {
   public constructor(private readonly prisma: PrismaClient) { }
 
-  public async findMany() {
+  public async findMany(filters: WineListFilters) {
+    const inventoryWhere = this.buildInventoryWhere(filters);
+
     return this.prisma.wine.findMany({
-      where: {
-        inventory: {
-          some: {
-            isAvailable: true
-          }
-        }
-      },
+      where: this.buildWineListWhere(filters, inventoryWhere),
       include: {
         winery: true,
         region: true,
         inventory: {
-          where: {
-            isAvailable: true
-          }
+          where: inventoryWhere
         }
       },
       orderBy: { createdAt: "desc" }
@@ -79,5 +73,35 @@ export class WineRepository implements IWineRepository {
       },
       orderBy: { createdAt: "desc" }
     });
+  }
+
+  private buildInventoryWhere(filters: WineListFilters): Prisma.InventoryWhereInput {
+    return {
+      isAvailable: true,
+      ...(filters.featuredOnly ? { isFeatured: true } : {}),
+      ...(filters.hasGlass ? { priceGlass: { gt: 0 } } : {}),
+      ...(filters.hasBottle ? { priceBottle: { gt: 0 } } : {})
+    };
+  }
+
+  private buildWineListWhere(
+    filters: WineListFilters,
+    inventoryWhere: Prisma.InventoryWhereInput
+  ): Prisma.WineWhereInput {
+    return {
+      ...(filters.country
+        ? {
+          country: {
+            equals: filters.country,
+            mode: "insensitive"
+          }
+        }
+        : {}),
+      ...(filters.regionId ? { regionId: filters.regionId } : {}),
+      ...(filters.wineryId ? { wineryId: filters.wineryId } : {}),
+      inventory: {
+        some: inventoryWhere
+      }
+    };
   }
 }

@@ -9,8 +9,17 @@ export type WineWithInventory = WineWithRelations & {
   inventory: Inventory[];
 };
 
+export type WineListFilters = {
+  country?: string;
+  regionId?: string;
+  wineryId?: string;
+  featuredOnly?: boolean;
+  hasGlass?: boolean;
+  hasBottle?: boolean;
+};
+
 export interface IWineRepository {
-  findMany(): Promise<WineWithInventory[]>;
+  findMany(filters: WineListFilters): Promise<WineWithInventory[]>;
   findByIdWithInventory(id: string): Promise<WineWithInventory | null>;
   findByUniqueNameWineryVintage(input: {
     name: string;
