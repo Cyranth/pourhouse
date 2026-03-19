@@ -58,6 +58,7 @@ describe("WineController", () => {
   it("listWines returns 200", async () => {
     const wineService = {
       getWines: vi.fn(),
+      getGroupedWines: vi.fn(),
       getWineBySlug: vi.fn(),
       createWine: vi.fn(),
       searchWines: vi.fn(),
@@ -144,6 +145,7 @@ describe("WineController", () => {
   it("getWine returns 200", async () => {
     const wineService = {
       getWines: vi.fn(),
+      getGroupedWines: vi.fn(),
       getWineBySlug: vi.fn(),
       createWine: vi.fn(),
       searchWines: vi.fn(),
@@ -165,6 +167,7 @@ describe("WineController", () => {
   it("addWine returns 201", async () => {
     const wineService = {
       getWines: vi.fn(),
+      getGroupedWines: vi.fn(),
       getWineBySlug: vi.fn(),
       createWine: vi.fn(),
       searchWines: vi.fn(),
@@ -186,6 +189,7 @@ describe("WineController", () => {
   it("searchWine returns 200", async () => {
     const wineService = {
       getWines: vi.fn(),
+      getGroupedWines: vi.fn(),
       getWineBySlug: vi.fn(),
       createWine: vi.fn(),
       searchWines: vi.fn(),
@@ -207,6 +211,7 @@ describe("WineController", () => {
   it("listWineRatings returns 200", async () => {
     const wineService = {
       getWines: vi.fn(),
+      getGroupedWines: vi.fn(),
       getWineBySlug: vi.fn(),
       createWine: vi.fn(),
       searchWines: vi.fn(),
@@ -222,6 +227,64 @@ describe("WineController", () => {
     await controller.listWineRatings(req, res);
 
     expect(wineService.getWineRatings).toHaveBeenCalledWith("w1");
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it("listGroupedWines returns 200", async () => {
+    const wineService = {
+      getWines: vi.fn(),
+      getGroupedWines: vi.fn(),
+      getWineBySlug: vi.fn(),
+      createWine: vi.fn(),
+      searchWines: vi.fn(),
+      getWineRatings: vi.fn()
+    } as unknown as WineService;
+
+    vi.mocked(wineService.getGroupedWines).mockResolvedValue({
+      groups: [
+        {
+          type: "red",
+          regions: [
+            {
+              id: "region-1",
+              name: "Napa Valley",
+              wines: [
+                {
+                  id: "w1",
+                  slug: "cabernet-2020",
+                  name: "Cabernet",
+                  vintage: 2020,
+                  country: "US",
+                  description: "Bold",
+                  imageUrl: "https://example.com/wine.png",
+                  winery: {
+                    id: "winery-1",
+                    name: "Alpha Winery"
+                  },
+                  region: {
+                    id: "region-1",
+                    name: "Napa Valley"
+                  },
+                  pricing: {
+                    glass: 16,
+                    bottle: 68
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      totalWines: 1
+    });
+
+    const controller = new WineController(wineService);
+    const res = createResponse();
+    const query = { featuredOnly: true };
+
+    await controller.listGroupedWines({ query } as unknown as Request, res);
+
+    expect(wineService.getGroupedWines).toHaveBeenCalledWith(query);
     expect(res.status).toHaveBeenCalledWith(200);
   });
 });

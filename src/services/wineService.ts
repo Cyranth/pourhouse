@@ -26,6 +26,24 @@ export type WineListItem = {
   };
 };
 
+export type WineType = "red" | "white" | "rose" | "sparkling" | "dessert" | "fortified" | "other";
+
+export type GroupedWineRegion = {
+  id: string;
+  name: string;
+  wines: WineListItem[];
+};
+
+export type GroupedWineType = {
+  type: WineType;
+  regions: GroupedWineRegion[];
+};
+
+export type GroupedWinesResponse = {
+  groups: GroupedWineType[];
+  totalWines: number;
+};
+
 export type WineListSort = "createdAt" | "name" | "priceGlass" | "priceBottle";
 
 export type SortOrder = "asc" | "desc";
@@ -36,6 +54,8 @@ export type ListWinesQuery = WineListFilters & {
   sort: WineListSort;
   order: SortOrder;
 };
+
+export type GroupedWinesQuery = WineListFilters;
 
 export type PaginatedWineList = {
   items: WineListItem[];
@@ -90,6 +110,48 @@ export class WineService {
     };
   }
 
+  public async getGroupedWines(query: GroupedWinesQuery): Promise<GroupedWinesResponse> {
+    const wines = await this.wineRepository.findMany(this.toWineListFilters(query));
+    const groupedByType = new Map<WineType, Map<string, GroupedWineRegion>>();
+
+    for (const wine of wines) {
+      const wineType = this.inferWineType(wine);
+      const regionMap = groupedByType.get(wineType) ?? new Map<string, GroupedWineRegion>();
+      const region = regionMap.get(wine.region.id) ?? {
+        id: wine.region.id,
+        name: wine.region.name,
+        wines: []
+      };
+
+      region.wines.push(this.toWineListItem(wine));
+      regionMap.set(wine.region.id, region);
+      groupedByType.set(wineType, regionMap);
+    }
+
+    const typeOrder: WineType[] = ["red", "white", "rose", "sparkling", "dessert", "fortified", "other"];
+    const groups = typeOrder.flatMap((wineType) => {
+      const regionMap = groupedByType.get(wineType);
+
+      if (!regionMap) {
+        return [];
+      }
+
+      const regions = [...regionMap.values()]
+        .map((region) => ({
+          ...region,
+          wines: region.wines.sort((left, right) => left.name.localeCompare(right.name))
+        }))
+        .sort((left, right) => left.name.localeCompare(right.name));
+
+      return [{ type: wineType, regions }];
+    });
+
+    return {
+      groups,
+      totalWines: wines.length
+    };
+  }
+
   public async getWineBySlug(slug: string) {
     const wine = await this.wineRepository.findBySlugWithInventory(slug);
 
@@ -139,7 +201,7 @@ export class WineService {
     return this.ratingRepository.findByWineId(wineId);
   }
 
-  private toWineListFilters(query: ListWinesQuery): WineListFilters {
+  private toWineListFilters(query: ListWinesQuery | GroupedWinesQuery): WineListFilters {
     return {
       ...(query.country !== undefined ? { country: query.country } : {}),
       ...(query.regionId !== undefined ? { regionId: query.regionId } : {}),
@@ -148,6 +210,43 @@ export class WineService {
       ...(query.hasGlass !== undefined ? { hasGlass: query.hasGlass } : {}),
       ...(query.hasBottle !== undefined ? { hasBottle: query.hasBottle } : {})
     };
+  }
+
+  private inferWineType(wine: WineWithInventory): WineType {
+    const grapeVarieties = Array.isArray(wine.grapeVarieties)
+      ? wine.grapeVarieties.filter((value): value is string => typeof value === "string")
+      : [];
+    const searchableText = [wine.name, wine.description, ...grapeVarieties].join(" ").toLowerCase();
+
+    if (this.matchesAny(searchableText, ["sparkling", "champagne", "prosecco", "cava"])) {
+      return "sparkling";
+    }
+
+    if (this.matchesAny(searchableText, ["rose", "rosé"])) {
+      return "rose";
+    }
+
+    if (this.matchesAny(searchableText, ["port", "sherry", "madeira"])) {
+      return "fortified";
+    }
+
+    if (this.matchesAny(searchableText, ["sauternes", "ice wine", "late harvest", "tokaji", "dessert"])) {
+      return "dessert";
+    }
+
+    if (this.matchesAny(searchableText, ["chardonnay", "sauvignon blanc", "pinot grigio", "riesling", "chenin", "albarino"])) {
+      return "white";
+    }
+
+    if (this.matchesAny(searchableText, ["cabernet", "merlot", "pinot noir", "syrah", "shiraz", "malbec", "tempranillo", "zinfandel"])) {
+      return "red";
+    }
+
+    return "other";
+  }
+
+  private matchesAny(searchableText: string, candidates: string[]) {
+    return candidates.some((candidate) => searchableText.includes(candidate));
   }
 
   private compareWineListItems(

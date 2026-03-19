@@ -4,7 +4,12 @@ import type { IRegionRepository } from "@/repositories/region/IRegionRepository"
 import type { IRatingRepository } from "@/repositories/rating/IRatingRepository";
 import type { IWineRepository, WineWithInventory } from "@/repositories/wine/IWineRepository";
 import type { IWineryRepository } from "@/repositories/winery/IWineryRepository";
-import { WineService, type CreateWineInput, type ListWinesQuery } from "@/services/wineService";
+import {
+  WineService,
+  type CreateWineInput,
+  type GroupedWinesQuery,
+  type ListWinesQuery
+} from "@/services/wineService";
 import { AppError } from "@/utils/appError";
 
 function createService() {
@@ -95,6 +100,10 @@ const defaultListQuery: ListWinesQuery = {
   pageSize: 20,
   sort: "createdAt",
   order: "desc"
+};
+
+const defaultGroupedQuery: GroupedWinesQuery = {
+  featuredOnly: true
 };
 
 describe("WineService", () => {
@@ -447,6 +456,243 @@ describe("WineService", () => {
       total: 0,
       totalPages: 0
     });
+  });
+
+  it("groups wines by inferred type and region", async () => {
+    const { service, wineRepository } = createService();
+
+    const redWine = createWineWithInventory();
+    redWine.id = "w1";
+    redWine.name = "Cabernet";
+    redWine.region.id = "region-red";
+    redWine.region.name = "Napa Valley";
+    redWine.grapeVarieties = ["Cabernet Sauvignon"];
+    redWine.inventory = [
+      {
+        id: "inv-r",
+        wineId: "w1",
+        locationId: "main",
+        priceGlass: new Decimal(18),
+        priceBottle: new Decimal(72),
+        stockQuantity: 3,
+        isAvailable: true,
+        isFeatured: true,
+        createdAt: new Date("2026-03-19T00:00:00.000Z")
+      }
+    ];
+
+    const whiteWine = createWineWithInventory();
+    whiteWine.id = "w2";
+    whiteWine.name = "Albarino";
+    whiteWine.region.id = "region-white";
+    whiteWine.region.name = "Rias Baixas";
+    whiteWine.grapeVarieties = ["Albarino"];
+    whiteWine.inventory = [
+      {
+        id: "inv-w",
+        wineId: "w2",
+        locationId: "main",
+        priceGlass: new Decimal(15),
+        priceBottle: new Decimal(60),
+        stockQuantity: 5,
+        isAvailable: true,
+        isFeatured: true,
+        createdAt: new Date("2026-03-19T00:00:00.000Z")
+      }
+    ];
+
+    vi.mocked(wineRepository.findMany).mockResolvedValue([whiteWine, redWine]);
+
+    await expect(service.getGroupedWines(defaultGroupedQuery)).resolves.toEqual({
+      groups: [
+        {
+          type: "red",
+          regions: [
+            {
+              id: "region-red",
+              name: "Napa Valley",
+              wines: [
+                {
+                  id: "w1",
+                  slug: "cabernet-2020",
+                  name: "Cabernet",
+                  vintage: 2020,
+                  country: "US",
+                  description: "Bold",
+                  imageUrl: "https://example.com/wine.png",
+                  winery: {
+                    id: "winery-1",
+                    name: "Alpha Winery"
+                  },
+                  region: {
+                    id: "region-red",
+                    name: "Napa Valley"
+                  },
+                  pricing: {
+                    glass: 18,
+                    bottle: 72
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          type: "white",
+          regions: [
+            {
+              id: "region-white",
+              name: "Rias Baixas",
+              wines: [
+                {
+                  id: "w2",
+                  slug: "cabernet-2020",
+                  name: "Albarino",
+                  vintage: 2020,
+                  country: "US",
+                  description: "Bold",
+                  imageUrl: "https://example.com/wine.png",
+                  winery: {
+                    id: "winery-1",
+                    name: "Alpha Winery"
+                  },
+                  region: {
+                    id: "region-white",
+                    name: "Rias Baixas"
+                  },
+                  pricing: {
+                    glass: 15,
+                    bottle: 60
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      totalWines: 2
+    });
+    expect(wineRepository.findMany).toHaveBeenCalledWith({ featuredOnly: true });
+  });
+
+  it("classifies uncategorized wines as other", async () => {
+    const { service, wineRepository } = createService();
+    const wine = createWineWithInventory();
+    wine.name = "Mystery Blend";
+    wine.description = "House selection";
+    wine.grapeVarieties = {
+      primary: "Unknown"
+    } as never;
+
+    vi.mocked(wineRepository.findMany).mockResolvedValue([wine]);
+
+    await expect(service.getGroupedWines({})).resolves.toEqual({
+      groups: [
+        {
+          type: "other",
+          regions: [
+            {
+              id: "region-1",
+              name: "Napa Valley",
+              wines: [
+                {
+                  id: "w1",
+                  slug: "cabernet-2020",
+                  name: "Mystery Blend",
+                  vintage: 2020,
+                  country: "US",
+                  description: "House selection",
+                  imageUrl: "https://example.com/wine.png",
+                  winery: {
+                    id: "winery-1",
+                    name: "Alpha Winery"
+                  },
+                  region: {
+                    id: "region-1",
+                    name: "Napa Valley"
+                  },
+                  pricing: {
+                    glass: null,
+                    bottle: null
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      totalWines: 1
+    });
+  });
+
+  it("classifies sparkling, rose, fortified, and dessert wines", async () => {
+    const { service, wineRepository } = createService();
+
+    const sparklingWine = createWineWithInventory();
+    sparklingWine.id = "w-sparkling";
+    sparklingWine.name = "Prosecco Brut";
+
+    const roseWine = createWineWithInventory();
+    roseWine.id = "w-rose";
+    roseWine.name = "Rose Blend";
+
+    const fortifiedWine = createWineWithInventory();
+    fortifiedWine.id = "w-fortified";
+    fortifiedWine.description = "Classic port style";
+
+    const dessertWine = createWineWithInventory();
+    dessertWine.id = "w-dessert";
+    dessertWine.description = "Late harvest dessert wine";
+
+    vi.mocked(wineRepository.findMany).mockResolvedValue([
+      sparklingWine,
+      roseWine,
+      fortifiedWine,
+      dessertWine
+    ]);
+
+    const response = await service.getGroupedWines({});
+
+    expect(response.totalWines).toBe(4);
+    expect(response.groups.map((group) => group.type)).toEqual([
+      "rose",
+      "sparkling",
+      "dessert",
+      "fortified"
+    ]);
+  });
+
+  it("sorts grouped region names and wine names alphabetically", async () => {
+    const { service, wineRepository } = createService();
+
+    const alphaNapa = createWineWithInventory();
+    alphaNapa.id = "w-alpha";
+    alphaNapa.name = "Alpha Cabernet";
+    alphaNapa.region.id = "region-a";
+    alphaNapa.region.name = "Napa Valley";
+    alphaNapa.grapeVarieties = ["Cabernet Sauvignon"];
+
+    const zetaNapa = createWineWithInventory();
+    zetaNapa.id = "w-zeta";
+    zetaNapa.name = "Zeta Merlot";
+    zetaNapa.region.id = "region-a";
+    zetaNapa.region.name = "Napa Valley";
+    zetaNapa.grapeVarieties = ["Merlot"];
+
+    const betaBordeaux = createWineWithInventory();
+    betaBordeaux.id = "w-beta";
+    betaBordeaux.name = "Beta Cabernet";
+    betaBordeaux.region.id = "region-b";
+    betaBordeaux.region.name = "Bordeaux";
+    betaBordeaux.grapeVarieties = ["Cabernet Sauvignon"];
+
+    vi.mocked(wineRepository.findMany).mockResolvedValue([zetaNapa, betaBordeaux, alphaNapa]);
+
+    const response = await service.getGroupedWines({});
+    const redGroup = response.groups.find((group) => group.type === "red");
+
+    expect(redGroup?.regions.map((region) => region.name)).toEqual(["Bordeaux", "Napa Valley"]);
+    expect(redGroup?.regions[1]?.wines.map((wine) => wine.name)).toEqual(["Alpha Cabernet", "Zeta Merlot"]);
   });
 
   it("covers numeric, string, and nullable comparator branches", () => {

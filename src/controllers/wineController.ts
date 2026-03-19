@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import type { ListWinesQuery } from "@/services/wineService";
+import type { GroupedWinesQuery, ListWinesQuery } from "@/services/wineService";
 import { WineService } from "@/services/wineService";
 
 export class WineController {
@@ -7,6 +7,11 @@ export class WineController {
 
   public listWines = async (req: Request, res: Response) => {
     const wines = await this.wineService.getWines(req.query as unknown as ListWinesQuery);
+    res.status(200).json(wines);
+  };
+
+  public listGroupedWines = async (req: Request, res: Response) => {
+    const wines = await this.wineService.getGroupedWines(req.query as unknown as GroupedWinesQuery);
     res.status(200).json(wines);
   };
 

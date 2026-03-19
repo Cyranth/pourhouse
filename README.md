@@ -117,6 +117,7 @@ Use `.env.example` as a template:
 ### Wines
 
 - `GET /api/wines` - returns a paginated wine list with optional filters and summarized `pricing.glass` / `pricing.bottle` values
+- `GET /api/wines/grouped` - returns wines grouped by inferred type, then by region
 - `GET /api/wines/:slug`
 - `POST /api/wines`
 - `GET /api/wines/search?q=term`
@@ -173,6 +174,48 @@ Example filtered request:
 
 ```text
 GET /api/wines?page=1&pageSize=10&sort=priceGlass&order=asc&country=US&featuredOnly=true
+```
+
+Example `GET /api/wines/grouped` response:
+
+```json
+{
+  "groups": [
+    {
+      "type": "red",
+      "regions": [
+        {
+          "id": "region-1",
+          "name": "Napa Valley",
+          "wines": [
+            {
+              "id": "wine-id",
+              "slug": "cabernet-2020",
+              "name": "Cabernet",
+              "vintage": 2020,
+              "country": "US",
+              "description": "Bold",
+              "imageUrl": "https://example.com/wine.png",
+              "winery": {
+                "id": "winery-1",
+                "name": "Alpha Winery"
+              },
+              "region": {
+                "id": "region-1",
+                "name": "Napa Valley"
+              },
+              "pricing": {
+                "glass": 16,
+                "bottle": 68
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "totalWines": 1
+}
 ```
 
 ### Inventory

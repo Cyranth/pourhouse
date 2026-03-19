@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { wineController } from "@/container";
 import { validateRequest } from "@/middleware/validateRequest";
-import { createWineSchema, listWinesSchema, searchWineSchema } from "@/models/validation";
+import { createWineSchema, groupedWinesSchema, listWinesSchema, searchWineSchema } from "@/models/validation";
 import { asyncHandler } from "@/utils/asyncHandler";
 
 const router = Router();
 
 router.get("/", validateRequest(listWinesSchema, "query"), asyncHandler(wineController.listWines));
+router.get("/grouped", validateRequest(groupedWinesSchema, "query"), asyncHandler(wineController.listGroupedWines));
 router.get("/search", validateRequest(searchWineSchema, "query"), asyncHandler(wineController.searchWine));
 router.get("/:slug", asyncHandler(wineController.getWine));
 router.post("/", validateRequest(createWineSchema), asyncHandler(wineController.addWine));

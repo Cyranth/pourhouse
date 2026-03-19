@@ -7,6 +7,15 @@ const booleanQuerySchema = z
 const wineListSortSchema = z.enum(["createdAt", "name", "priceGlass", "priceBottle"]);
 const sortOrderSchema = z.enum(["asc", "desc"]);
 
+const wineListFilterSchema = z.object({
+  country: z.string().trim().min(1).optional(),
+  regionId: z.string().uuid().optional(),
+  wineryId: z.string().uuid().optional(),
+  featuredOnly: booleanQuerySchema.optional(),
+  hasGlass: booleanQuerySchema.optional(),
+  hasBottle: booleanQuerySchema.optional()
+});
+
 export const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
@@ -36,18 +45,14 @@ export const searchWineSchema = z.object({
   q: z.string().min(1)
 });
 
-export const listWinesSchema = z.object({
+export const listWinesSchema = wineListFilterSchema.extend({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
   sort: wineListSortSchema.default("createdAt"),
-  order: sortOrderSchema.default("desc"),
-  country: z.string().trim().min(1).optional(),
-  regionId: z.string().uuid().optional(),
-  wineryId: z.string().uuid().optional(),
-  featuredOnly: booleanQuerySchema.optional(),
-  hasGlass: booleanQuerySchema.optional(),
-  hasBottle: booleanQuerySchema.optional()
+  order: sortOrderSchema.default("desc")
 });
+
+export const groupedWinesSchema = wineListFilterSchema;
 
 export const createInventorySchema = z.object({
   wineId: z.string().uuid(),
