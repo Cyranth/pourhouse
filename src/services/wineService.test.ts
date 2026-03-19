@@ -345,6 +345,230 @@ describe("WineService", () => {
     });
   });
 
+  it("applies all list filters and sorts names ascending", async () => {
+    const { service, wineRepository } = createService();
+    const zinfandel = createWineWithInventory();
+    zinfandel.id = "w1";
+    zinfandel.slug = "zinfandel-2020";
+    zinfandel.name = "Zinfandel";
+    zinfandel.regionId = "region-9";
+    zinfandel.wineryId = "winery-9";
+
+    const albarino = createWineWithInventory();
+    albarino.id = "w2";
+    albarino.slug = "albarino-2021";
+    albarino.name = "Albarino";
+    albarino.regionId = "region-9";
+    albarino.wineryId = "winery-9";
+
+    vi.mocked(wineRepository.findMany).mockResolvedValue([zinfandel, albarino]);
+
+    await expect(
+      service.getWines({
+        page: 1,
+        pageSize: 20,
+        sort: "name",
+        order: "asc",
+        regionId: "region-9",
+        wineryId: "winery-9",
+        hasGlass: true,
+        hasBottle: true,
+        featuredOnly: false
+      })
+    ).resolves.toEqual({
+      items: [
+        {
+          id: "w2",
+          slug: "albarino-2021",
+          name: "Albarino",
+          vintage: 2020,
+          country: "US",
+          description: "Bold",
+          imageUrl: "https://example.com/wine.png",
+          winery: {
+            id: "winery-1",
+            name: "Alpha Winery"
+          },
+          region: {
+            id: "region-1",
+            name: "Napa Valley"
+          },
+          pricing: {
+            glass: null,
+            bottle: null
+          }
+        },
+        {
+          id: "w1",
+          slug: "zinfandel-2020",
+          name: "Zinfandel",
+          vintage: 2020,
+          country: "US",
+          description: "Bold",
+          imageUrl: "https://example.com/wine.png",
+          winery: {
+            id: "winery-1",
+            name: "Alpha Winery"
+          },
+          region: {
+            id: "region-1",
+            name: "Napa Valley"
+          },
+          pricing: {
+            glass: null,
+            bottle: null
+          }
+        }
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 2,
+      totalPages: 1
+    });
+    expect(wineRepository.findMany).toHaveBeenCalledWith({
+      regionId: "region-9",
+      wineryId: "winery-9",
+      featuredOnly: false,
+      hasGlass: true,
+      hasBottle: true
+    });
+  });
+
+  it("returns totalPages as 0 when no wines match the query", async () => {
+    const { service, wineRepository } = createService();
+
+    vi.mocked(wineRepository.findMany).mockResolvedValue([]);
+
+    await expect(service.getWines(defaultListQuery)).resolves.toEqual({
+      items: [],
+      page: 1,
+      pageSize: 20,
+      total: 0,
+      totalPages: 0
+    });
+  });
+
+  it("covers numeric, string, and nullable comparator branches", () => {
+    const { service } = createService();
+    const compareNumbers = service["compareNumbers"].bind(service) as (
+      left: number,
+      right: number,
+      order: "asc" | "desc"
+    ) => number;
+    const compareStrings = service["compareStrings"].bind(service) as (
+      left: string,
+      right: string,
+      order: "asc" | "desc"
+    ) => number;
+    const compareNullableNumbers = service["compareNullableNumbers"].bind(service) as (
+      left: number | null,
+      right: number | null,
+      order: "asc" | "desc"
+    ) => number;
+
+    expect(compareNumbers(1, 2, "asc")).toBeLessThan(0);
+    expect(compareNumbers(1, 2, "desc")).toBeGreaterThan(0);
+
+    expect(compareStrings("Albarino", "Zinfandel", "asc")).toBeLessThan(0);
+    expect(compareStrings("Albarino", "Zinfandel", "desc")).toBeGreaterThan(0);
+
+    expect(compareNullableNumbers(null, null, "asc")).toBe(0);
+    expect(compareNullableNumbers(null, 12, "asc")).toBe(1);
+    expect(compareNullableNumbers(12, null, "asc")).toBe(-1);
+    expect(compareNullableNumbers(10, 12, "desc")).toBeGreaterThan(0);
+  });
+
+  it("covers name and bottle sorting branches in compareWineListItems", () => {
+    const { service } = createService();
+    const compareWineListItems = service["compareWineListItems"].bind(service) as (
+      left: { wine: WineWithInventory; item: ReturnType<WineService["toWineListItem"]> },
+      right: { wine: WineWithInventory; item: ReturnType<WineService["toWineListItem"]> },
+      sort: "createdAt" | "name" | "priceGlass" | "priceBottle",
+      order: "asc" | "desc"
+    ) => number;
+    const toWineListItem = service["toWineListItem"].bind(service) as (
+      wine: WineWithInventory
+    ) => ReturnType<WineService["toWineListItem"]>;
+
+    const leftWine = createWineWithInventory();
+    leftWine.name = "Merlot";
+    leftWine.inventory = [
+      {
+        id: "inv-left",
+        wineId: "w1",
+        locationId: "main",
+        priceGlass: new Decimal(10),
+        priceBottle: new Decimal(55),
+        stockQuantity: 1,
+        isAvailable: true,
+        isFeatured: false,
+        createdAt: new Date("2026-03-19T00:00:00.000Z")
+      }
+    ];
+
+    const rightWine = createWineWithInventory();
+    rightWine.name = "Albarino";
+    rightWine.inventory = [
+      {
+        id: "inv-right",
+        wineId: "w1",
+        locationId: "main",
+        priceGlass: new Decimal(11),
+        priceBottle: new Decimal(60),
+        stockQuantity: 1,
+        isAvailable: true,
+        isFeatured: false,
+        createdAt: new Date("2026-03-19T00:00:00.000Z")
+      }
+    ];
+
+    expect(
+      compareWineListItems(
+        { wine: leftWine, item: toWineListItem(leftWine) },
+        { wine: rightWine, item: toWineListItem(rightWine) },
+        "name",
+        "desc"
+      )
+    ).toBeLessThan(0);
+
+    expect(
+      compareWineListItems(
+        { wine: leftWine, item: toWineListItem(leftWine) },
+        { wine: rightWine, item: toWineListItem(rightWine) },
+        "priceBottle",
+        "asc"
+      )
+    ).toBeLessThan(0);
+  });
+
+  it("covers the createdAt sorting branch in compareWineListItems", () => {
+    const { service } = createService();
+    const compareWineListItems = service["compareWineListItems"].bind(service) as (
+      left: { wine: WineWithInventory; item: ReturnType<WineService["toWineListItem"]> },
+      right: { wine: WineWithInventory; item: ReturnType<WineService["toWineListItem"]> },
+      sort: "createdAt" | "name" | "priceGlass" | "priceBottle",
+      order: "asc" | "desc"
+    ) => number;
+    const toWineListItem = service["toWineListItem"].bind(service) as (
+      wine: WineWithInventory
+    ) => ReturnType<WineService["toWineListItem"]>;
+
+    const olderWine = createWineWithInventory();
+    olderWine.createdAt = new Date("2026-03-18T00:00:00.000Z");
+
+    const newerWine = createWineWithInventory();
+    newerWine.createdAt = new Date("2026-03-19T00:00:00.000Z");
+
+    expect(
+      compareWineListItems(
+        { wine: olderWine, item: toWineListItem(olderWine) },
+        { wine: newerWine, item: toWineListItem(newerWine) },
+        "createdAt",
+        "desc"
+      )
+    ).toBeGreaterThan(0);
+  });
+
   it("throws when wine by id is missing", async () => {
     const { service, wineRepository } = createService();
 
