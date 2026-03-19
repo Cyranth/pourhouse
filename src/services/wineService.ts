@@ -67,7 +67,6 @@ export type PaginatedWineList = {
 
 export type CreateWineInput = {
   name: string;
-  slug: string;
   vintage: number;
   wineryId: string;
   regionId: string;
@@ -184,7 +183,10 @@ export class WineService {
       throw new AppError("Wine with the same name, winery, and vintage already exists", 409);
     }
 
-    return this.wineRepository.create(input);
+    return this.wineRepository.create({
+      ...input,
+      slug: await this.generateUniqueSlug(input.name, input.vintage)
+    });
   }
 
   public async searchWines(query: string) {
@@ -210,6 +212,32 @@ export class WineService {
       ...(query.hasGlass !== undefined ? { hasGlass: query.hasGlass } : {}),
       ...(query.hasBottle !== undefined ? { hasBottle: query.hasBottle } : {})
     };
+  }
+
+  private async generateUniqueSlug(name: string, vintage: number): Promise<string> {
+    const normalizedName = this.slugify(name);
+    const baseSlug = normalizedName ? `${normalizedName}-${vintage}` : `wine-${vintage}`;
+    let candidateSlug = baseSlug;
+    let suffix = 2;
+
+    while (await this.wineRepository.findBySlug(candidateSlug)) {
+      candidateSlug = `${baseSlug}-${suffix}`;
+      suffix += 1;
+    }
+
+    return candidateSlug;
+  }
+
+  private slugify(value: string): string {
+    return value
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "");
   }
 
   private inferWineType(wine: WineWithInventory): WineType {

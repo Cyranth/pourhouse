@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { listWinesSchema } from "@/models/validation";
+import { createWineSchema, listWinesSchema } from "@/models/validation";
 
 describe("listWinesSchema", () => {
   it("applies defaults and transforms string booleans", () => {
@@ -21,6 +21,61 @@ describe("listWinesSchema", () => {
       order: "desc",
       hasBottle: true,
       featuredOnly: false
+    });
+  });
+});
+
+describe("createWineSchema", () => {
+  it("accepts a create payload without a slug", () => {
+    expect(
+      createWineSchema.parse({
+        name: "Cabernet",
+        vintage: 2020,
+        wineryId: "11111111-1111-4111-8111-111111111111",
+        regionId: "22222222-2222-4222-8222-222222222222",
+        country: "US",
+        grapeVarieties: ["Cabernet Sauvignon"],
+        alcoholPercent: 13.5,
+        description: "Bold",
+        imageUrl: "https://example.com/wine.png"
+      })
+    ).toEqual({
+      name: "Cabernet",
+      vintage: 2020,
+      wineryId: "11111111-1111-4111-8111-111111111111",
+      regionId: "22222222-2222-4222-8222-222222222222",
+      country: "US",
+      grapeVarieties: ["Cabernet Sauvignon"],
+      alcoholPercent: 13.5,
+      description: "Bold",
+      imageUrl: "https://example.com/wine.png"
+    });
+  });
+
+  it("strips a client-provided slug from the payload", () => {
+    expect(
+      createWineSchema.parse({
+        name: "Cabernet",
+        slug: "ignored-by-server",
+        vintage: 2020,
+        wineryId: "11111111-1111-4111-8111-111111111111",
+        regionId: "22222222-2222-4222-8222-222222222222",
+        country: "US",
+        grapeVarieties: ["Cabernet Sauvignon"],
+        alcoholPercent: 13.5,
+        description: "Bold",
+        imageUrl: "https://example.com/wine.png"
+      })
+    ).toEqual({
+      name: "Cabernet",
+      vintage: 2020,
+      wineryId: "11111111-1111-4111-8111-111111111111",
+      regionId: "22222222-2222-4222-8222-222222222222",
+      country: "US",
+      grapeVarieties: ["Cabernet Sauvignon"],
+      alcoholPercent: 13.5,
+      description: "Bold",
+      imageUrl: "https://example.com/wine.png"
     });
   });
 });

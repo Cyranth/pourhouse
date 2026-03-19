@@ -15,6 +15,7 @@ import { AppError } from "@/utils/appError";
 function createService() {
   const wineRepository: IWineRepository = {
     findMany: vi.fn(),
+    findBySlug: vi.fn(),
     findByIdWithInventory: vi.fn(),
     findBySlugWithInventory: vi.fn(),
     findByUniqueNameWineryVintage: vi.fn(),
@@ -46,7 +47,6 @@ function createService() {
 
 const input: CreateWineInput = {
   name: "Cabernet",
-  slug: "cabernet-winery-1-2020",
   vintage: 2020,
   wineryId: "winery-1",
   regionId: "region-1",
@@ -840,10 +840,57 @@ describe("WineService", () => {
     vi.mocked(wineryRepository.findById).mockResolvedValue({ id: "winery-1" } as never);
     vi.mocked(regionRepository.findById).mockResolvedValue({ id: "region-1" } as never);
     vi.mocked(wineRepository.findByUniqueNameWineryVintage).mockResolvedValue(null);
+    vi.mocked(wineRepository.findBySlug).mockResolvedValue(null);
     vi.mocked(wineRepository.create).mockResolvedValue(created);
 
     await expect(service.createWine(input)).resolves.toEqual(created);
-    expect(wineRepository.create).toHaveBeenCalledWith(input);
+    expect(wineRepository.create).toHaveBeenCalledWith({
+      ...input,
+      slug: "cabernet-2020"
+    });
+  });
+
+  it("adds a numeric suffix when the generated slug already exists", async () => {
+    const { service, wineRepository, wineryRepository, regionRepository } = createService();
+    const created = createWineWithRelations();
+
+    vi.mocked(wineryRepository.findById).mockResolvedValue({ id: "winery-1" } as never);
+    vi.mocked(regionRepository.findById).mockResolvedValue({ id: "region-1" } as never);
+    vi.mocked(wineRepository.findByUniqueNameWineryVintage).mockResolvedValue(null);
+    vi.mocked(wineRepository.findBySlug)
+      .mockResolvedValueOnce({ id: "existing-1" } as never)
+      .mockResolvedValueOnce({ id: "existing-2" } as never)
+      .mockResolvedValueOnce(null);
+    vi.mocked(wineRepository.create).mockResolvedValue(created);
+
+    await service.createWine(input);
+
+    expect(wineRepository.create).toHaveBeenCalledWith({
+      ...input,
+      slug: "cabernet-2020-3"
+    });
+  });
+
+  it("falls back to a generic slug prefix when name normalization is empty", async () => {
+    const { service, wineRepository, wineryRepository, regionRepository } = createService();
+    const created = createWineWithRelations();
+
+    vi.mocked(wineryRepository.findById).mockResolvedValue({ id: "winery-1" } as never);
+    vi.mocked(regionRepository.findById).mockResolvedValue({ id: "region-1" } as never);
+    vi.mocked(wineRepository.findByUniqueNameWineryVintage).mockResolvedValue(null);
+    vi.mocked(wineRepository.findBySlug).mockResolvedValue(null);
+    vi.mocked(wineRepository.create).mockResolvedValue(created);
+
+    await service.createWine({
+      ...input,
+      name: "!!!"
+    });
+
+    expect(wineRepository.create).toHaveBeenCalledWith({
+      ...input,
+      name: "!!!",
+      slug: "wine-2020"
+    });
   });
 
   it("throws when winery is missing", async () => {
