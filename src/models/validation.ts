@@ -29,7 +29,6 @@ export const loginSchema = z.object({
 
 export const createWineSchema = z.object({
   name: z.string().min(1),
-  slug: z.string().min(1),
   vintage: z.number().int().min(1900).max(2100),
   wineryId: z.string().uuid(),
   regionId: z.string().uuid(),

@@ -119,7 +119,7 @@ Use `.env.example` as a template:
 - `GET /api/wines` - returns a paginated wine list with optional filters and summarized `pricing.glass` / `pricing.bottle` values
 - `GET /api/wines/grouped` - returns wines grouped by inferred type, then by region
 - `GET /api/wines/:slug`
-- `POST /api/wines`
+- `POST /api/wines` - creates a wine and generates its slug from `name` + `vintage`
 - `GET /api/wines/search?q=term`
 - `GET /api/wines/:id/ratings`
 
@@ -217,6 +217,24 @@ Example `GET /api/wines/grouped` response:
   "totalWines": 1
 }
 ```
+
+Example `POST /api/wines` request body:
+
+```json
+{
+  "name": "Opus One",
+  "vintage": 2019,
+  "wineryId": "winery-id",
+  "regionId": "region-id",
+  "country": "US",
+  "grapeVarieties": ["Cabernet Sauvignon", "Merlot"],
+  "alcoholPercent": 14.5,
+  "description": "Structured and age-worthy.",
+  "imageUrl": "https://example.com/opus-one.png"
+}
+```
+
+Generated slugs are based on `name` + `vintage` and receive a numeric suffix when needed to stay unique, for example `opus-one-2019` or `opus-one-2019-2`.
 
 ### Inventory
 
