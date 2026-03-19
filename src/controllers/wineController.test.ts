@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { describe, expect, it, vi } from "vitest";
 import { WineController } from "@/controllers/wineController";
+import type { ListWinesQuery } from "@/services/wineService";
 import type { WineService } from "@/services/wineService";
 
 function createResponse() {
@@ -63,59 +64,81 @@ describe("WineController", () => {
       getWineRatings: vi.fn()
     } as unknown as WineService;
 
-    vi.mocked(wineService.getWines).mockResolvedValue([
-      {
-        id: "w1",
-        slug: "cabernet-2020",
-        name: "Cabernet",
-        vintage: 2020,
-        country: "US",
-        description: "Bold",
-        imageUrl: "https://example.com/wine.png",
-        winery: {
-          id: "winery-1",
-          name: "Alpha Winery"
-        },
-        region: {
-          id: "region-1",
-          name: "Napa Valley"
-        },
-        pricing: {
-          glass: 16,
-          bottle: 68
+    const query: ListWinesQuery = {
+      page: 2,
+      pageSize: 10,
+      sort: "name",
+      order: "asc",
+      country: "US",
+      featuredOnly: true
+    };
+
+    vi.mocked(wineService.getWines).mockResolvedValue({
+      items: [
+        {
+          id: "w1",
+          slug: "cabernet-2020",
+          name: "Cabernet",
+          vintage: 2020,
+          country: "US",
+          description: "Bold",
+          imageUrl: "https://example.com/wine.png",
+          winery: {
+            id: "winery-1",
+            name: "Alpha Winery"
+          },
+          region: {
+            id: "region-1",
+            name: "Napa Valley"
+          },
+          pricing: {
+            glass: 16,
+            bottle: 68
+          }
         }
-      }
-    ]);
+      ],
+      page: 2,
+      pageSize: 10,
+      total: 12,
+      totalPages: 2
+    });
 
     const controller = new WineController(wineService);
     const res = createResponse();
 
-    await controller.listWines({} as Request, res);
+    await controller.listWines({ query } as unknown as Request, res);
 
+    expect(wineService.getWines).toHaveBeenCalledWith(query);
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith([
-      {
-        id: "w1",
-        slug: "cabernet-2020",
-        name: "Cabernet",
-        vintage: 2020,
-        country: "US",
-        description: "Bold",
-        imageUrl: "https://example.com/wine.png",
-        winery: {
-          id: "winery-1",
-          name: "Alpha Winery"
-        },
-        region: {
-          id: "region-1",
-          name: "Napa Valley"
-        },
-        pricing: {
-          glass: 16,
-          bottle: 68
+    expect(res.json).toHaveBeenCalledWith({
+      items: [
+        {
+          id: "w1",
+          slug: "cabernet-2020",
+          name: "Cabernet",
+          vintage: 2020,
+          country: "US",
+          description: "Bold",
+          imageUrl: "https://example.com/wine.png",
+          winery: {
+            id: "winery-1",
+            name: "Alpha Winery"
+          },
+          region: {
+            id: "region-1",
+            name: "Napa Valley"
+          },
+          pricing: {
+            glass: 16,
+            bottle: 68
+          }
         }
-      }
-    ]);
+      ],
+      page: 2,
+      pageSize: 10,
+      total: 12,
+      totalPages: 2
+    });
   });
 
   it("getWine returns 200", async () => {

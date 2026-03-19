@@ -12,7 +12,7 @@ describe("WineRepository", () => {
 
     const repository = new WineRepository(prisma);
 
-    await repository.findMany();
+  await repository.findMany({});
 
     expect(findMany).toHaveBeenCalledWith({
       where: {
@@ -28,6 +28,66 @@ describe("WineRepository", () => {
         inventory: {
           where: {
             isAvailable: true
+          }
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+  });
+
+  it("findMany applies wine and inventory filters", async () => {
+    const findMany = vi.fn().mockResolvedValue([]);
+    const prisma = {
+      wine: {
+        findMany
+      }
+    } as never;
+
+    const repository = new WineRepository(prisma);
+
+    await repository.findMany({
+      country: "US",
+      regionId: "region-1",
+      wineryId: "winery-1",
+      featuredOnly: true,
+      hasGlass: true,
+      hasBottle: true
+    });
+
+    expect(findMany).toHaveBeenCalledWith({
+      where: {
+        country: {
+          equals: "US",
+          mode: "insensitive"
+        },
+        regionId: "region-1",
+        wineryId: "winery-1",
+        inventory: {
+          some: {
+            isAvailable: true,
+            isFeatured: true,
+            priceGlass: {
+              gt: 0
+            },
+            priceBottle: {
+              gt: 0
+            }
+          }
+        }
+      },
+      include: {
+        winery: true,
+        region: true,
+        inventory: {
+          where: {
+            isAvailable: true,
+            isFeatured: true,
+            priceGlass: {
+              gt: 0
+            },
+            priceBottle: {
+              gt: 0
+            }
           }
         }
       },

@@ -1,11 +1,12 @@
 import type { Request, Response } from "express";
+import type { ListWinesQuery } from "@/services/wineService";
 import { WineService } from "@/services/wineService";
 
 export class WineController {
   public constructor(private readonly wineService: WineService) { }
 
-  public listWines = async (_req: Request, res: Response) => {
-    const wines = await this.wineService.getWines();
+  public listWines = async (req: Request, res: Response) => {
+    const wines = await this.wineService.getWines(req.query as unknown as ListWinesQuery);
     res.status(200).json(wines);
   };
 

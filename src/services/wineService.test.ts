@@ -4,7 +4,7 @@ import type { IRegionRepository } from "@/repositories/region/IRegionRepository"
 import type { IRatingRepository } from "@/repositories/rating/IRatingRepository";
 import type { IWineRepository, WineWithInventory } from "@/repositories/wine/IWineRepository";
 import type { IWineryRepository } from "@/repositories/winery/IWineryRepository";
-import { WineService, type CreateWineInput } from "@/services/wineService";
+import { WineService, type CreateWineInput, type ListWinesQuery } from "@/services/wineService";
 import { AppError } from "@/utils/appError";
 
 function createService() {
@@ -89,6 +89,13 @@ function createWineWithRelations() {
   return wine;
 }
 
+const defaultListQuery: ListWinesQuery = {
+  page: 1,
+  pageSize: 20,
+  sort: "createdAt",
+  order: "desc"
+};
+
 describe("WineService", () => {
   it("returns all wines", async () => {
     const { service, wineRepository } = createService();
@@ -149,29 +156,36 @@ describe("WineService", () => {
 
     vi.mocked(wineRepository.findMany).mockResolvedValue(wines);
 
-    await expect(service.getWines()).resolves.toEqual([
-      {
-        id: "w1",
-        slug: "cabernet-2020",
-        name: "Cabernet",
-        vintage: 2020,
-        country: "US",
-        description: "Bold",
-        imageUrl: "https://example.com/wine.png",
-        winery: {
-          id: "winery-1",
-          name: "Alpha Winery"
-        },
-        region: {
-          id: "region-1",
-          name: "Napa Valley"
-        },
-        pricing: {
-          glass: 16,
-          bottle: 68
+    await expect(service.getWines(defaultListQuery)).resolves.toEqual({
+      items: [
+        {
+          id: "w1",
+          slug: "cabernet-2020",
+          name: "Cabernet",
+          vintage: 2020,
+          country: "US",
+          description: "Bold",
+          imageUrl: "https://example.com/wine.png",
+          winery: {
+            id: "winery-1",
+            name: "Alpha Winery"
+          },
+          region: {
+            id: "region-1",
+            name: "Napa Valley"
+          },
+          pricing: {
+            glass: 16,
+            bottle: 68
+          }
         }
-      }
-    ]);
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+      totalPages: 1
+    });
+    expect(wineRepository.findMany).toHaveBeenCalledWith({});
   });
 
   it("returns null pricing when a wine has no available inventory rows", async () => {
@@ -210,29 +224,125 @@ describe("WineService", () => {
 
     vi.mocked(wineRepository.findMany).mockResolvedValue(wines);
 
-    await expect(service.getWines()).resolves.toEqual([
-      {
-        id: "w2",
-        slug: "riesling-2021",
-        name: "Riesling",
-        vintage: 2021,
-        country: "DE",
-        description: "Bright",
-        imageUrl: "https://example.com/riesling.png",
-        winery: {
-          id: "winery-2",
-          name: "Mosel Cellars"
-        },
-        region: {
-          id: "region-2",
-          name: "Mosel"
-        },
-        pricing: {
-          glass: null,
-          bottle: null
+    await expect(service.getWines(defaultListQuery)).resolves.toEqual({
+      items: [
+        {
+          id: "w2",
+          slug: "riesling-2021",
+          name: "Riesling",
+          vintage: 2021,
+          country: "DE",
+          description: "Bright",
+          imageUrl: "https://example.com/riesling.png",
+          winery: {
+            id: "winery-2",
+            name: "Mosel Cellars"
+          },
+          region: {
+            id: "region-2",
+            name: "Mosel"
+          },
+          pricing: {
+            glass: null,
+            bottle: null
+          }
         }
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+      totalPages: 1
+    });
+  });
+
+  it("sorts by lowest glass price ascending and paginates results", async () => {
+    const { service, wineRepository } = createService();
+    const firstWine = createWineWithInventory();
+    firstWine.id = "w1";
+    firstWine.name = "Cabernet";
+    firstWine.createdAt = new Date("2026-03-19T00:00:00.000Z");
+    firstWine.inventory = [
+      {
+        id: "inv-1",
+        wineId: "w1",
+        locationId: "bar-main",
+        priceGlass: new Decimal(20),
+        priceBottle: new Decimal(80),
+        stockQuantity: 5,
+        isAvailable: true,
+        isFeatured: false,
+        createdAt: new Date("2026-03-19T00:00:00.000Z")
       }
-    ]);
+    ];
+
+    const secondWine = createWineWithInventory();
+    secondWine.id = "w2";
+    secondWine.slug = "merlot-2021";
+    secondWine.name = "Merlot";
+    secondWine.createdAt = new Date("2026-03-18T00:00:00.000Z");
+    secondWine.inventory = [
+      {
+        id: "inv-2",
+        wineId: "w2",
+        locationId: "bar-main",
+        priceGlass: new Decimal(14),
+        priceBottle: new Decimal(64),
+        stockQuantity: 3,
+        isAvailable: true,
+        isFeatured: false,
+        createdAt: new Date("2026-03-18T00:00:00.000Z")
+      }
+    ];
+
+    vi.mocked(wineRepository.findMany).mockResolvedValue([firstWine, secondWine]);
+
+    await expect(
+      service.getWines({
+        ...defaultListQuery,
+        page: 2,
+        pageSize: 1,
+        sort: "priceGlass",
+        order: "asc",
+        country: "US",
+        featuredOnly: true
+      })
+    ).resolves.toEqual({
+      items: [
+        {
+          id: "w1",
+          slug: "cabernet-2020",
+          name: "Cabernet",
+          vintage: 2020,
+          country: "US",
+          description: "Bold",
+          imageUrl: "https://example.com/wine.png",
+          winery: {
+            id: "winery-1",
+            name: "Alpha Winery"
+          },
+          region: {
+            id: "region-1",
+            name: "Napa Valley"
+          },
+          pricing: {
+            glass: 20,
+            bottle: 80
+          }
+        }
+      ],
+      page: 2,
+      pageSize: 1,
+      total: 2,
+      totalPages: 2
+    });
+    expect(wineRepository.findMany).toHaveBeenCalledWith({
+      country: "US",
+      featuredOnly: true,
+      hasGlass: undefined,
+      hasBottle: undefined,
+      regionId: undefined,
+      wineryId: undefined
+    });
   });
 
   it("throws when wine by id is missing", async () => {

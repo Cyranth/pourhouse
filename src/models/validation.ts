@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+const booleanQuerySchema = z
+  .union([z.boolean(), z.enum(["true", "false"])])
+  .transform((value) => value === true || value === "true");
+
+const wineListSortSchema = z.enum(["createdAt", "name", "priceGlass", "priceBottle"]);
+const sortOrderSchema = z.enum(["asc", "desc"]);
+
 export const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
@@ -27,6 +34,19 @@ export const createWineSchema = z.object({
 
 export const searchWineSchema = z.object({
   q: z.string().min(1)
+});
+
+export const listWinesSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  sort: wineListSortSchema.default("createdAt"),
+  order: sortOrderSchema.default("desc"),
+  country: z.string().trim().min(1).optional(),
+  regionId: z.string().uuid().optional(),
+  wineryId: z.string().uuid().optional(),
+  featuredOnly: booleanQuerySchema.optional(),
+  hasGlass: booleanQuerySchema.optional(),
+  hasBottle: booleanQuerySchema.optional()
 });
 
 export const createInventorySchema = z.object({
