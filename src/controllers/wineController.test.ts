@@ -25,7 +25,29 @@ describe("WineController", () => {
       getWineRatings: vi.fn()
     } as unknown as WineService;
 
-    vi.mocked(wineService.getWines).mockResolvedValue([{ id: "w1" }]);
+    vi.mocked(wineService.getWines).mockResolvedValue([
+      {
+        id: "w1",
+        slug: "cabernet-2020",
+        name: "Cabernet",
+        vintage: 2020,
+        country: "US",
+        description: "Bold",
+        imageUrl: "https://example.com/wine.png",
+        winery: {
+          id: "winery-1",
+          name: "Alpha Winery"
+        },
+        region: {
+          id: "region-1",
+          name: "Napa Valley"
+        },
+        pricing: {
+          glass: 16,
+          bottle: 68
+        }
+      }
+    ]);
 
     const controller = new WineController(wineService);
     const res = createResponse();
@@ -33,7 +55,29 @@ describe("WineController", () => {
     await controller.listWines({} as Request, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith([{ id: "w1" }]);
+    expect(res.json).toHaveBeenCalledWith([
+      {
+        id: "w1",
+        slug: "cabernet-2020",
+        name: "Cabernet",
+        vintage: 2020,
+        country: "US",
+        description: "Bold",
+        imageUrl: "https://example.com/wine.png",
+        winery: {
+          id: "winery-1",
+          name: "Alpha Winery"
+        },
+        region: {
+          id: "region-1",
+          name: "Napa Valley"
+        },
+        pricing: {
+          glass: 16,
+          bottle: 68
+        }
+      }
+    ]);
   });
 
   it("getWine returns 200", async () => {

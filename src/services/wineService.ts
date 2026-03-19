@@ -1,8 +1,30 @@
 import type { IRegionRepository } from "@/repositories/region/IRegionRepository";
 import type { IRatingRepository } from "@/repositories/rating/IRatingRepository";
-import type { IWineRepository } from "@/repositories/wine/IWineRepository";
+import type { IWineRepository, WineWithInventory } from "@/repositories/wine/IWineRepository";
 import type { IWineryRepository } from "@/repositories/winery/IWineryRepository";
 import { AppError } from "@/utils/appError";
+
+export type WineListItem = {
+  id: string;
+  slug: string;
+  name: string;
+  vintage: number;
+  country: string;
+  description: string;
+  imageUrl: string;
+  winery: {
+    id: string;
+    name: string;
+  };
+  region: {
+    id: string;
+    name: string;
+  };
+  pricing: {
+    glass: number | null;
+    bottle: number | null;
+  };
+};
 
 export type CreateWineInput = {
   name: string;
@@ -27,7 +49,9 @@ export class WineService {
   ) { }
 
   public async getWines() {
-    return this.wineRepository.findMany();
+    const wines = await this.wineRepository.findMany();
+
+    return wines.map((wine) => this.toWineListItem(wine));
   }
 
   public async getWineById(id: string) {
@@ -77,5 +101,32 @@ export class WineService {
     }
 
     return this.ratingRepository.findByWineId(wineId);
+  }
+
+  private toWineListItem(wine: WineWithInventory): WineListItem {
+    const glassPrices = wine.inventory.map((item) => Number(item.priceGlass));
+    const bottlePrices = wine.inventory.map((item) => Number(item.priceBottle));
+
+    return {
+      id: wine.id,
+      slug: wine.slug,
+      name: wine.name,
+      vintage: wine.vintage,
+      country: wine.country,
+      description: wine.description,
+      imageUrl: wine.imageUrl,
+      winery: {
+        id: wine.winery.id,
+        name: wine.winery.name
+      },
+      region: {
+        id: wine.region.id,
+        name: wine.region.name
+      },
+      pricing: {
+        glass: glassPrices.length > 0 ? Math.min(...glassPrices) : null,
+        bottle: bottlePrices.length > 0 ? Math.min(...bottlePrices) : null
+      }
+    };
   }
 }
