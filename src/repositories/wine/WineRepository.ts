@@ -6,9 +6,21 @@ export class WineRepository implements IWineRepository {
 
   public async findMany() {
     return this.prisma.wine.findMany({
+      where: {
+        inventory: {
+          some: {
+            isAvailable: true
+          }
+        }
+      },
       include: {
         winery: true,
-        region: true
+        region: true,
+        inventory: {
+          where: {
+            isAvailable: true
+          }
+        }
       },
       orderBy: { createdAt: "desc" }
     });

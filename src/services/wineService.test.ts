@@ -1,7 +1,8 @@
+import { Decimal } from "@prisma/client/runtime/library";
 import { describe, expect, it, vi } from "vitest";
 import type { IRegionRepository } from "@/repositories/region/IRegionRepository";
 import type { IRatingRepository } from "@/repositories/rating/IRatingRepository";
-import type { IWineRepository } from "@/repositories/wine/IWineRepository";
+import type { IWineRepository, WineWithInventory } from "@/repositories/wine/IWineRepository";
 import type { IWineryRepository } from "@/repositories/winery/IWineryRepository";
 import { WineService, type CreateWineInput } from "@/services/wineService";
 import { AppError } from "@/utils/appError";
@@ -53,11 +54,86 @@ const input: CreateWineInput = {
 describe("WineService", () => {
   it("returns all wines", async () => {
     const { service, wineRepository } = createService();
-    const wines = [{ id: "w1" }];
+    const wines: WineWithInventory[] = [
+      {
+        id: "w1",
+        slug: "cabernet-2020",
+        name: "Cabernet",
+        vintage: 2020,
+        wineryId: "winery-1",
+        regionId: "region-1",
+        country: "US",
+        grapeVarieties: ["Cabernet Sauvignon"],
+        alcoholPercent: 13.5,
+        description: "Bold",
+        imageUrl: "https://example.com/wine.png",
+        squareItemId: null,
+        createdAt: new Date("2026-03-19T00:00:00.000Z"),
+        winery: {
+          id: "winery-1",
+          name: "Alpha Winery",
+          regionId: "region-1",
+          country: "US",
+          website: "https://example.com",
+          description: "Estate producer"
+        },
+        region: {
+          id: "region-1",
+          name: "Napa Valley",
+          parentId: null
+        },
+        inventory: [
+          {
+            id: "inv-1",
+            wineId: "w1",
+            locationId: "bar-main",
+            priceGlass: new Decimal(18),
+            priceBottle: new Decimal(72),
+            stockQuantity: 5,
+            isAvailable: true,
+            isFeatured: false,
+            createdAt: new Date("2026-03-19T00:00:00.000Z")
+          },
+          {
+            id: "inv-2",
+            wineId: "w1",
+            locationId: "bar-patio",
+            priceGlass: new Decimal(16),
+            priceBottle: new Decimal(68),
+            stockQuantity: 3,
+            isAvailable: true,
+            isFeatured: true,
+            createdAt: new Date("2026-03-19T00:00:00.000Z")
+          }
+        ]
+      }
+    ];
 
     vi.mocked(wineRepository.findMany).mockResolvedValue(wines);
 
-    await expect(service.getWines()).resolves.toEqual(wines);
+    await expect(service.getWines()).resolves.toEqual([
+      {
+        id: "w1",
+        slug: "cabernet-2020",
+        name: "Cabernet",
+        vintage: 2020,
+        country: "US",
+        description: "Bold",
+        imageUrl: "https://example.com/wine.png",
+        winery: {
+          id: "winery-1",
+          name: "Alpha Winery"
+        },
+        region: {
+          id: "region-1",
+          name: "Napa Valley"
+        },
+        pricing: {
+          glass: 16,
+          bottle: 68
+        }
+      }
+    ]);
   });
 
   it("throws when wine by id is missing", async () => {
