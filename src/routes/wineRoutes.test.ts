@@ -19,4 +19,18 @@ describe("wineRoutes", () => {
       ])
     );
   });
+
+  it("returns 400 for invalid grouped wine query params", async () => {
+    const response = await request(app).get("/api/wines/grouped?regionId=invalid");
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Validation failed");
+    expect(response.body.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: ["regionId"]
+        })
+      ])
+    );
+  });
 });
