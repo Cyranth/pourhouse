@@ -13,7 +13,6 @@ function createResponse() {
 
   vi.mocked(res.status).mockReturnValue(res);
   vi.mocked(res.json).mockReturnValue(res);
-  vi.mocked(res.redirect).mockReturnValue(res);
 
   return res;
 }
