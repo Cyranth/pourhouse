@@ -22,14 +22,32 @@ model Wine {
   squareItemId   String?     @unique
   createdAt      DateTime    @default(now())
 
-  winery    Winery      @relation(fields: [wineryId], references: [id], onDelete: Restrict)
-  region    Region      @relation(fields: [regionId], references: [id], onDelete: Restrict)
-  inventory Inventory[]
+  winery    Winery           @relation(fields: [wineryId], references: [id], onDelete: Restrict)
+  region    Region           @relation(fields: [regionId], references: [id], onDelete: Restrict)
+  variations WineVariation[]
   ratings   Rating[]
 
   @@unique([name, wineryId, vintage])
   @@index([regionId])
   @@index([wineryId])
+}
+
+model WineVariation {
+  id                  String    @id @default(uuid())
+  wineId              String
+  squareVariationId   String?
+  name                String
+  price               Decimal   @db.Decimal(10, 2)
+  volumeOz            Int?
+  isPublic            Boolean   @default(true)
+  isDefault           Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+
+  wine      Wine        @relation(fields: [wineId], references: [id], onDelete: Cascade)
+  inventory Inventory[]
+
+  @@index([wineId])
+  @@index([squareVariationId])
 }
 
 model Winery {
@@ -60,19 +78,18 @@ model Region {
 }
 
 model Inventory {
-  id            String   @id @default(uuid())
-  wineId        String
-  locationId    String
-  priceGlass    Decimal  @db.Decimal(10, 2)
-  priceBottle   Decimal  @db.Decimal(10, 2)
-  stockQuantity Int
-  isAvailable   Boolean  @default(true)
-  isFeatured    Boolean  @default(false)
-  createdAt     DateTime @default(now())
+  id                String   @id @default(uuid())
+  wineVariationId   String
+  locationId        String
+  stockQuantity     Int
+  isAvailable       Boolean  @default(true)
+  isFeatured        Boolean  @default(false)
+  createdAt         DateTime @default(now())
 
-  wine Wine @relation(fields: [wineId], references: [id], onDelete: Cascade)
+  wineVariation WineVariation @relation(fields: [wineVariationId], references: [id], onDelete: Cascade)
 
-  @@index([wineId])
+  @@index([wineVariationId])
+  @@unique([wineVariationId, locationId])
 }
 
 model User {
