@@ -86,12 +86,12 @@ function createWineWithInventory(): WineWithInventory {
       name: "Napa Valley",
       parentId: null
     },
-    inventory: []
+    variations: []
   };
 }
 
 function createWineWithRelations() {
-  const { inventory, ...wine } = createWineWithInventory();
+  const { variations, ...wine } = createWineWithInventory();
 
   return wine;
 }
@@ -138,28 +138,49 @@ describe("WineService", () => {
           name: "Napa Valley",
           parentId: null
         },
-        inventory: [
+        variations: [
           {
-            id: "inv-1",
+            id: "var-1",
             wineId: "w1",
-            locationId: "bar-main",
-            priceGlass: new Decimal(18),
-            priceBottle: new Decimal(72),
-            stockQuantity: 5,
-            isAvailable: true,
-            isFeatured: false,
-            createdAt: new Date("2026-03-19T00:00:00.000Z")
+            squareVariationId: null,
+            name: "By the Glass",
+            price: new Decimal(18),
+            volumeOz: 6,
+            isPublic: true,
+            isDefault: true,
+            createdAt: new Date("2026-03-19T00:00:00.000Z"),
+            inventory: [
+              {
+                id: "inv-1",
+                wineVariationId: "var-1",
+                locationId: "bar-main",
+                stockQuantity: 5,
+                isAvailable: true,
+                isFeatured: false,
+                createdAt: new Date("2026-03-19T00:00:00.000Z")
+              },
+              {
+                id: "inv-2",
+                wineVariationId: "var-1",
+                locationId: "bar-patio",
+                stockQuantity: 3,
+                isAvailable: true,
+                isFeatured: true,
+                createdAt: new Date("2026-03-19T00:00:00.000Z")
+              }
+            ]
           },
           {
-            id: "inv-2",
+            id: "var-2",
             wineId: "w1",
-            locationId: "bar-patio",
-            priceGlass: new Decimal(16),
-            priceBottle: new Decimal(68),
-            stockQuantity: 3,
-            isAvailable: true,
-            isFeatured: true,
-            createdAt: new Date("2026-03-19T00:00:00.000Z")
+            squareVariationId: null,
+            name: "Bottle",
+            price: new Decimal(68),
+            volumeOz: 750,
+            isPublic: true,
+            isDefault: false,
+            createdAt: new Date("2026-03-19T00:00:00.000Z"),
+            inventory: []
           }
         ]
       }
@@ -186,7 +207,7 @@ describe("WineService", () => {
             name: "Napa Valley"
           },
           pricing: {
-            glass: 16,
+            glass: 18,
             bottle: 68
           }
         }
@@ -229,7 +250,7 @@ describe("WineService", () => {
           name: "Mosel",
           parentId: null
         },
-        inventory: []
+        variations: []
       }
     ];
 
@@ -272,17 +293,40 @@ describe("WineService", () => {
     firstWine.id = "w1";
     firstWine.name = "Cabernet";
     firstWine.createdAt = new Date("2026-03-19T00:00:00.000Z");
-    firstWine.inventory = [
+    firstWine.variations = [
       {
-        id: "inv-1",
+        id: "var-1",
         wineId: "w1",
-        locationId: "bar-main",
-        priceGlass: new Decimal(20),
-        priceBottle: new Decimal(80),
-        stockQuantity: 5,
-        isAvailable: true,
-        isFeatured: false,
-        createdAt: new Date("2026-03-19T00:00:00.000Z")
+        squareVariationId: null,
+        name: "By the Glass",
+        price: new Decimal(20),
+        volumeOz: 6,
+        isPublic: true,
+        isDefault: true,
+        createdAt: new Date("2026-03-19T00:00:00.000Z"),
+        inventory: [
+          {
+            id: "inv-1",
+            wineVariationId: "var-1",
+            locationId: "bar-main",
+            stockQuantity: 5,
+            isAvailable: true,
+            isFeatured: false,
+            createdAt: new Date("2026-03-19T00:00:00.000Z")
+          }
+        ]
+      },
+      {
+        id: "var-2",
+        wineId: "w1",
+        squareVariationId: null,
+        name: "Bottle",
+        price: new Decimal(80),
+        volumeOz: 750,
+        isPublic: true,
+        isDefault: false,
+        createdAt: new Date("2026-03-19T00:00:00.000Z"),
+        inventory: []
       }
     ];
 
@@ -291,17 +335,40 @@ describe("WineService", () => {
     secondWine.slug = "merlot-2021";
     secondWine.name = "Merlot";
     secondWine.createdAt = new Date("2026-03-18T00:00:00.000Z");
-    secondWine.inventory = [
+    secondWine.variations = [
       {
-        id: "inv-2",
+        id: "var-3",
         wineId: "w2",
-        locationId: "bar-main",
-        priceGlass: new Decimal(14),
-        priceBottle: new Decimal(64),
-        stockQuantity: 3,
-        isAvailable: true,
-        isFeatured: false,
-        createdAt: new Date("2026-03-18T00:00:00.000Z")
+        squareVariationId: null,
+        name: "By the Glass",
+        price: new Decimal(14),
+        volumeOz: 6,
+        isPublic: true,
+        isDefault: true,
+        createdAt: new Date("2026-03-18T00:00:00.000Z"),
+        inventory: [
+          {
+            id: "inv-2",
+            wineVariationId: "var-3",
+            locationId: "bar-main",
+            stockQuantity: 3,
+            isAvailable: true,
+            isFeatured: false,
+            createdAt: new Date("2026-03-18T00:00:00.000Z")
+          }
+        ]
+      },
+      {
+        id: "var-4",
+        wineId: "w2",
+        squareVariationId: null,
+        name: "Bottle",
+        price: new Decimal(64),
+        volumeOz: 750,
+        isPublic: true,
+        isDefault: false,
+        createdAt: new Date("2026-03-18T00:00:00.000Z"),
+        inventory: []
       }
     ];
 
@@ -468,17 +535,40 @@ describe("WineService", () => {
     redWine.region.id = "region-red";
     redWine.region.name = "Napa Valley";
     redWine.grapeVarieties = ["Cabernet Sauvignon"];
-    redWine.inventory = [
+    redWine.variations = [
       {
-        id: "inv-r",
+        id: "var-r1",
         wineId: "w1",
-        locationId: "main",
-        priceGlass: new Decimal(18),
-        priceBottle: new Decimal(72),
-        stockQuantity: 3,
-        isAvailable: true,
-        isFeatured: true,
-        createdAt: new Date("2026-03-19T00:00:00.000Z")
+        squareVariationId: null,
+        name: "By the Glass",
+        price: new Decimal(18),
+        volumeOz: 6,
+        isPublic: true,
+        isDefault: true,
+        createdAt: new Date("2026-03-19T00:00:00.000Z"),
+        inventory: [
+          {
+            id: "inv-r",
+            wineVariationId: "var-r1",
+            locationId: "main",
+            stockQuantity: 3,
+            isAvailable: true,
+            isFeatured: true,
+            createdAt: new Date("2026-03-19T00:00:00.000Z")
+          }
+        ]
+      },
+      {
+        id: "var-r2",
+        wineId: "w1",
+        squareVariationId: null,
+        name: "Bottle",
+        price: new Decimal(72),
+        volumeOz: 750,
+        isPublic: true,
+        isDefault: false,
+        createdAt: new Date("2026-03-19T00:00:00.000Z"),
+        inventory: []
       }
     ];
 
@@ -488,17 +578,40 @@ describe("WineService", () => {
     whiteWine.region.id = "region-white";
     whiteWine.region.name = "Rias Baixas";
     whiteWine.grapeVarieties = ["Albarino"];
-    whiteWine.inventory = [
+    whiteWine.variations = [
       {
-        id: "inv-w",
+        id: "var-w1",
         wineId: "w2",
-        locationId: "main",
-        priceGlass: new Decimal(15),
-        priceBottle: new Decimal(60),
-        stockQuantity: 5,
-        isAvailable: true,
-        isFeatured: true,
-        createdAt: new Date("2026-03-19T00:00:00.000Z")
+        squareVariationId: null,
+        name: "By the Glass",
+        price: new Decimal(15),
+        volumeOz: 6,
+        isPublic: true,
+        isDefault: true,
+        createdAt: new Date("2026-03-19T00:00:00.000Z"),
+        inventory: [
+          {
+            id: "inv-w",
+            wineVariationId: "var-w1",
+            locationId: "main",
+            stockQuantity: 5,
+            isAvailable: true,
+            isFeatured: true,
+            createdAt: new Date("2026-03-19T00:00:00.000Z")
+          }
+        ]
+      },
+      {
+        id: "var-w2",
+        wineId: "w2",
+        squareVariationId: null,
+        name: "Bottle",
+        price: new Decimal(60),
+        volumeOz: 750,
+        isPublic: true,
+        isDefault: false,
+        createdAt: new Date("2026-03-19T00:00:00.000Z"),
+        inventory: []
       }
     ];
 
@@ -740,33 +853,79 @@ describe("WineService", () => {
 
     const leftWine = createWineWithInventory();
     leftWine.name = "Merlot";
-    leftWine.inventory = [
+    leftWine.variations = [
       {
-        id: "inv-left",
+        id: "var-left1",
         wineId: "w1",
-        locationId: "main",
-        priceGlass: new Decimal(10),
-        priceBottle: new Decimal(55),
-        stockQuantity: 1,
-        isAvailable: true,
-        isFeatured: false,
-        createdAt: new Date("2026-03-19T00:00:00.000Z")
+        squareVariationId: null,
+        name: "By the Glass",
+        price: new Decimal(10),
+        volumeOz: 6,
+        isPublic: true,
+        isDefault: true,
+        createdAt: new Date("2026-03-19T00:00:00.000Z"),
+        inventory: [
+          {
+            id: "inv-left",
+            wineVariationId: "var-left1",
+            locationId: "main",
+            stockQuantity: 1,
+            isAvailable: true,
+            isFeatured: false,
+            createdAt: new Date("2026-03-19T00:00:00.000Z")
+          }
+        ]
+      },
+      {
+        id: "var-left2",
+        wineId: "w1",
+        squareVariationId: null,
+        name: "Bottle",
+        price: new Decimal(55),
+        volumeOz: 750,
+        isPublic: true,
+        isDefault: false,
+        createdAt: new Date("2026-03-19T00:00:00.000Z"),
+        inventory: []
       }
     ];
 
     const rightWine = createWineWithInventory();
     rightWine.name = "Albarino";
-    rightWine.inventory = [
+    rightWine.variations = [
       {
-        id: "inv-right",
+        id: "var-right1",
         wineId: "w1",
-        locationId: "main",
-        priceGlass: new Decimal(11),
-        priceBottle: new Decimal(60),
-        stockQuantity: 1,
-        isAvailable: true,
-        isFeatured: false,
-        createdAt: new Date("2026-03-19T00:00:00.000Z")
+        squareVariationId: null,
+        name: "By the Glass",
+        price: new Decimal(11),
+        volumeOz: 6,
+        isPublic: true,
+        isDefault: true,
+        createdAt: new Date("2026-03-19T00:00:00.000Z"),
+        inventory: [
+          {
+            id: "inv-right",
+            wineVariationId: "var-right1",
+            locationId: "main",
+            stockQuantity: 1,
+            isAvailable: true,
+            isFeatured: false,
+            createdAt: new Date("2026-03-19T00:00:00.000Z")
+          }
+        ]
+      },
+      {
+        id: "var-right2",
+        wineId: "w1",
+        squareVariationId: null,
+        name: "Bottle",
+        price: new Decimal(60),
+        volumeOz: 750,
+        isPublic: true,
+        isDefault: false,
+        createdAt: new Date("2026-03-19T00:00:00.000Z"),
+        inventory: []
       }
     ];
 

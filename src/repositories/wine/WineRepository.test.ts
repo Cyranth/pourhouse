@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { WineRepository } from "@/repositories/wine/WineRepository";
 
 describe("WineRepository", () => {
-  it("findMany returns only wines with available inventory", async () => {
+  it("findMany returns only wines with public variations", async () => {
     const findMany = vi.fn().mockResolvedValue([]);
     const prisma = {
       wine: {
@@ -16,18 +16,21 @@ describe("WineRepository", () => {
 
     expect(findMany).toHaveBeenCalledWith({
       where: {
-        inventory: {
+        variations: {
           some: {
-            isAvailable: true
+            isPublic: true
           }
         }
       },
       include: {
         winery: true,
         region: true,
-        inventory: {
+        variations: {
+          include: {
+            inventory: true
+          },
           where: {
-            isAvailable: true
+            isPublic: true
           }
         }
       },
@@ -35,7 +38,7 @@ describe("WineRepository", () => {
     });
   });
 
-  it("findMany applies wine and inventory filters", async () => {
+  it("findMany applies wine and variation filters", async () => {
     const findMany = vi.fn().mockResolvedValue([]);
     const prisma = {
       wine: {
@@ -62,15 +65,13 @@ describe("WineRepository", () => {
         },
         regionId: "region-1",
         wineryId: "winery-1",
-        inventory: {
+        variations: {
           some: {
-            isAvailable: true,
-            isFeatured: true,
-            priceGlass: {
-              gt: 0
-            },
-            priceBottle: {
-              gt: 0
+            isPublic: true,
+            inventory: {
+              some: {
+                isFeatured: true
+              }
             }
           }
         }
@@ -78,15 +79,16 @@ describe("WineRepository", () => {
       include: {
         winery: true,
         region: true,
-        inventory: {
+        variations: {
+          include: {
+            inventory: true
+          },
           where: {
-            isAvailable: true,
-            isFeatured: true,
-            priceGlass: {
-              gt: 0
-            },
-            priceBottle: {
-              gt: 0
+            isPublic: true,
+            inventory: {
+              some: {
+                isFeatured: true
+              }
             }
           }
         }
@@ -95,7 +97,7 @@ describe("WineRepository", () => {
     });
   });
 
-  it("findByIdWithInventory requests winery, region, and inventory", async () => {
+  it("findByIdWithInventory requests winery, region, and variations", async () => {
     const findUnique = vi.fn().mockResolvedValue(null);
     const prisma = {
       wine: {
@@ -112,7 +114,11 @@ describe("WineRepository", () => {
       include: {
         winery: true,
         region: true,
-        inventory: true
+        variations: {
+          include: {
+            inventory: true
+          }
+        }
       }
     });
   });
@@ -151,7 +157,7 @@ describe("WineRepository", () => {
     });
   });
 
-  it("findBySlugWithInventory requests winery, region, and inventory", async () => {
+  it("findBySlugWithInventory requests winery, region, and variations", async () => {
     const findUnique = vi.fn().mockResolvedValue(null);
     const prisma = {
       wine: {
@@ -168,7 +174,11 @@ describe("WineRepository", () => {
       include: {
         winery: true,
         region: true,
-        inventory: true
+        variations: {
+          include: {
+            inventory: true
+          }
+        }
       }
     });
   });

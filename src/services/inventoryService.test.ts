@@ -31,10 +31,8 @@ function createService() {
 }
 
 const input: CreateInventoryInput = {
-  wineId: "wine-1",
+  wineVariationId: "var-1",
   locationId: "loc-1",
-  priceGlass: 9,
-  priceBottle: 36,
   stockQuantity: 12
 };
 
@@ -66,7 +64,7 @@ function createWineWithInventory(): WineWithInventory {
       name: "Napa Valley",
       parentId: null
     },
-    inventory: []
+    variations: []
   };
 }
 
@@ -108,22 +106,22 @@ describe("InventoryService", () => {
 
     await expect(service.createInventory(input)).resolves.toEqual(created);
     expect(inventoryRepository.create).toHaveBeenCalledWith({
-      wine: { connect: { id: "wine-1" } },
+      wineVariation: { connect: { id: "var-1" } },
       locationId: "loc-1",
-      priceGlass: 9,
-      priceBottle: 36,
       stockQuantity: 12,
       isAvailable: true,
       isFeatured: false
     });
   });
 
-  it("throws when creating inventory for missing wine", async () => {
-    const { service, wineRepository } = createService();
+  it("creates inventory even when no wine lookup occurs", async () => {
+    const { service, inventoryRepository, wineRepository } = createService();
+    const created = { id: "new-2" };
 
-    vi.mocked(wineRepository.findByIdWithInventory).mockResolvedValue(null);
+    vi.mocked(inventoryRepository.create).mockResolvedValue(created);
 
-    await expect(service.createInventory(input)).rejects.toEqual(new AppError("Wine not found", 404));
+    await expect(service.createInventory(input)).resolves.toEqual(created);
+    expect(wineRepository.findByIdWithInventory).not.toHaveBeenCalled();
   });
 
   it("updates inventory", async () => {

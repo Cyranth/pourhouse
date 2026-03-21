@@ -55,20 +55,66 @@ export class SquareSyncRepository implements ISquareSyncRepository {
 
   public async replaceInventoryForWine(wineId: string, rows: InventorySyncRow[]) {
     return this.prisma.$transaction(async (tx) => {
-      await tx.inventory.deleteMany({
-        where: { wineId }
+      // Delete existing variations and their inventory for this wine
+      const existingVariations = await tx.wineVariation.findMany({
+        where: { wineId },
+        select: { id: true }
       });
+
+      const variationIds = existingVariations.map(v => v.id);
+      if (variationIds.length > 0) {
+        await tx.inventory.deleteMany({
+          where: { wineVariationId: { in: variationIds } }
+        });
+        await tx.wineVariation.deleteMany({
+          where: { wineId }
+        });
+      }
 
       if (rows.length === 0) {
         return 0;
       }
 
+      // Group rows by variation to create unique variations
+      const variationMap = new Map<string, InventorySyncRow>();
+      rows.forEach(row => {
+        const key = row.squareVariationId || row.variationName;
+        if (!variationMap.has(key)) {
+          variationMap.set(key, row);
+        }
+      });
+      const variationRows = Array.from(variationMap.values());
+
+      // Create variations first
+      const variations = await Promise.all(
+        variationRows.map((row, index) =>
+          tx.wineVariation.create({
+            data: {
+              wineId,
+              squareVariationId: row.squareVariationId ?? null,
+              name: row.variationName,
+              price: row.price,
+              volumeOz: row.volumeOz ?? null,
+              isPublic: true,
+              isDefault: index === 0
+            }
+          })
+        )
+      );
+
+      // Create a map of variation keys to IDs for quick lookup
+      const variationIdMap = new Map<string, string>();
+      variations.forEach((variation, index) => {
+        const row = variationRows[index]!;
+        const key = row.squareVariationId || row.variationName;
+        variationIdMap.set(key, variation.id);
+      });
+
+      // Create inventory entries
       await tx.inventory.createMany({
-        data: rows.map((row) => ({
-          wineId,
+        data: rows.map(row => ({
+          wineVariationId: variationIdMap.get(row.squareVariationId || row.variationName)!,
           locationId: row.locationId,
-          priceGlass: row.priceGlass,
-          priceBottle: row.priceBottle,
           stockQuantity: row.stockQuantity,
           isAvailable: row.isAvailable,
           isFeatured: row.isFeatured

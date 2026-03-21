@@ -1,9 +1,11 @@
 import type { Prisma, Wine } from "@prisma/client";
 
 export type InventorySyncRow = {
+  squareVariationId?: string;
+  variationName: string;
+  price: number;
+  volumeOz?: number;
   locationId: string;
-  priceGlass: number;
-  priceBottle: number;
   stockQuantity: number;
   isAvailable: boolean;
   isFeatured: boolean;

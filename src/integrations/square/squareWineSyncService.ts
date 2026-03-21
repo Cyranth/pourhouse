@@ -176,9 +176,10 @@ export class SquareWineSyncService {
       const price = variation.priceAmountCents > 0 ? variation.priceAmountCents / 100 : 0;
 
       return {
+        squareVariationId: variation.id,
+        variationName: `Square Variation ${variation.id}`,
+        price,
         locationId: `square:${variation.id}`,
-        priceGlass: price,
-        priceBottle: price,
         stockQuantity: 0,
         isAvailable: !variation.isDeleted,
         isFeatured: false

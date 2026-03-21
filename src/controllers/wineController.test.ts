@@ -51,7 +51,7 @@ function createWineWithRelations() {
 function createWineWithInventory() {
   return {
     ...createWineWithRelations(),
-    inventory: []
+    variations: []
   };
 }
 

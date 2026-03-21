@@ -1,4 +1,4 @@
-import type { Inventory, Prisma, Region, Wine, Winery } from "@prisma/client";
+import type { Inventory, Prisma, Region, Wine, Winery, WineVariation } from "@prisma/client";
 
 export type WineWithRelations = Wine & {
   winery: Winery;
@@ -6,7 +6,9 @@ export type WineWithRelations = Wine & {
 };
 
 export type WineWithInventory = WineWithRelations & {
-  inventory: Inventory[];
+  variations: (WineVariation & {
+    inventory: Inventory[];
+  })[];
 };
 
 export type WineListFilters = {

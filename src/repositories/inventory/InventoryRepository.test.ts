@@ -16,10 +16,14 @@ describe("InventoryRepository", () => {
 
     expect(findMany).toHaveBeenCalledWith({
       include: {
-        wine: {
+        wineVariation: {
           include: {
-            winery: true,
-            region: true
+            wine: {
+              include: {
+                winery: true,
+                region: true
+              }
+            }
           }
         }
       },
@@ -42,17 +46,21 @@ describe("InventoryRepository", () => {
     expect(findUnique).toHaveBeenCalledWith({
       where: { id: "inventory-1" },
       include: {
-        wine: {
+        wineVariation: {
           include: {
-            winery: true,
-            region: true
+            wine: {
+              include: {
+                winery: true,
+                region: true
+              }
+            }
           }
         }
       }
     });
   });
 
-  it("create includes the related wine", async () => {
+  it("create includes the related wineVariation", async () => {
     const create = vi.fn().mockResolvedValue(null);
     const prisma = {
       inventory: {
@@ -62,10 +70,8 @@ describe("InventoryRepository", () => {
 
     const repository = new InventoryRepository(prisma);
     const input = {
-      wine: { connect: { id: "wine-1" } },
+      wineVariation: { connect: { id: "variation-1" } },
       locationId: "bar-main",
-      priceGlass: 12,
-      priceBottle: 48,
       stockQuantity: 5,
       isAvailable: true,
       isFeatured: false
@@ -76,12 +82,12 @@ describe("InventoryRepository", () => {
     expect(create).toHaveBeenCalledWith({
       data: input,
       include: {
-        wine: true
+        wineVariation: true
       }
     });
   });
 
-  it("update includes the related wine", async () => {
+  it("update includes the related wineVariation", async () => {
     const update = vi.fn().mockResolvedValue(null);
     const prisma = {
       inventory: {
@@ -101,7 +107,7 @@ describe("InventoryRepository", () => {
       where: { id: "inventory-1" },
       data: input,
       include: {
-        wine: true
+        wineVariation: true
       }
     });
   });
