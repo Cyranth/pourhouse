@@ -64,17 +64,19 @@ describe("SquareWineSyncService", () => {
 
     expect(repository.replaceInventoryForWine).toHaveBeenCalledWith("wine-created", [
       {
+        squareVariationId: "square-var-1",
+        variationName: "Square Variation square-var-1",
+        price: 15,
         locationId: "square:square-var-1",
-        priceGlass: 15,
-        priceBottle: 15,
         stockQuantity: 0,
         isAvailable: true,
         isFeatured: false
       },
       {
+        squareVariationId: "square-var-2",
+        variationName: "Square Variation square-var-2",
+        price: 18,
         locationId: "square:square-var-2",
-        priceGlass: 18,
-        priceBottle: 18,
         stockQuantity: 0,
         isAvailable: false,
         isFeatured: false
@@ -157,9 +159,10 @@ describe("SquareWineSyncService", () => {
 
     expect(firstCallRows).toEqual([
       {
+        squareVariationId: "dup-var",
+        variationName: "Square Variation dup-var",
+        price: 12,
         locationId: "square:dup-var",
-        priceGlass: 12,
-        priceBottle: 12,
         stockQuantity: 0,
         isAvailable: true,
         isFeatured: false
@@ -168,9 +171,10 @@ describe("SquareWineSyncService", () => {
 
     expect(secondCallRows).toEqual([
       {
+        squareVariationId: "square-item-no-variation-default",
+        variationName: "Square Variation square-item-no-variation-default",
+        price: 0,
         locationId: "square:square-item-no-variation-default",
-        priceGlass: 0,
-        priceBottle: 0,
         stockQuantity: 0,
         isAvailable: true,
         isFeatured: false
@@ -287,9 +291,10 @@ describe("SquareWineSyncService", () => {
     const secondInventoryRows = vi.mocked(repository.replaceInventoryForWine).mock.calls[1]?.[1];
     expect(secondInventoryRows).toEqual([
       {
+        squareVariationId: "square-item-punct-variation",
+        variationName: "Square Variation square-item-punct-variation",
+        price: 0,
         locationId: "square:square-item-punct-variation",
-        priceGlass: 0,
-        priceBottle: 0,
         stockQuantity: 0,
         isAvailable: true,
         isFeatured: false

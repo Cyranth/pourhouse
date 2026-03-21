@@ -341,8 +341,8 @@ export class WineService {
   }
 
   private toWineListItem(wine: WineWithInventory): WineListItem {
-    const glassPrices = wine.inventory.map((item) => Number(item.priceGlass));
-    const bottlePrices = wine.inventory.map((item) => Number(item.priceBottle));
+    // Extract all unique prices from variations
+    const prices = wine.variations.map((variation) => Number(variation.price));
 
     return {
       id: wine.id,
@@ -361,8 +361,8 @@ export class WineService {
         name: wine.region.name
       },
       pricing: {
-        glass: glassPrices.length > 0 ? Math.min(...glassPrices) : null,
-        bottle: bottlePrices.length > 0 ? Math.min(...bottlePrices) : null
+        glass: prices.length > 0 ? Math.min(...prices) : null,
+        bottle: prices.length > 0 ? Math.max(...prices) : null
       }
     };
   }

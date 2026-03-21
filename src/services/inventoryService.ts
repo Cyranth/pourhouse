@@ -3,10 +3,8 @@ import type { IWineRepository } from "@/repositories/wine/IWineRepository";
 import { AppError } from "@/utils/appError";
 
 export type CreateInventoryInput = {
-  wineId: string;
+  wineVariationId: string;
   locationId: string;
-  priceGlass: number;
-  priceBottle: number;
   stockQuantity: number;
   isAvailable?: boolean;
   isFeatured?: boolean;
@@ -14,8 +12,6 @@ export type CreateInventoryInput = {
 
 export type UpdateInventoryInput = {
   locationId?: string;
-  priceGlass?: number;
-  priceBottle?: number;
   stockQuantity?: number;
   isAvailable?: boolean;
   isFeatured?: boolean;
@@ -42,17 +38,9 @@ export class InventoryService {
   }
 
   public async createInventory(input: CreateInventoryInput) {
-    const wine = await this.wineRepository.findByIdWithInventory(input.wineId);
-
-    if (!wine) {
-      throw new AppError("Wine not found", 404);
-    }
-
     return this.inventoryRepository.create({
-      wine: { connect: { id: input.wineId } },
+      wineVariation: { connect: { id: input.wineVariationId } },
       locationId: input.locationId,
-      priceGlass: input.priceGlass,
-      priceBottle: input.priceBottle,
       stockQuantity: input.stockQuantity,
       isAvailable: input.isAvailable ?? true,
       isFeatured: input.isFeatured ?? false

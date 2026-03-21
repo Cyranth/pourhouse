@@ -56,7 +56,7 @@ function createWineWithInventory(): WineWithInventory {
       name: "Napa Valley",
       parentId: null
     },
-    inventory: []
+    variations: []
   };
 }
 

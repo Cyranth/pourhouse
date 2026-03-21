@@ -5,15 +5,18 @@ export class WineRepository implements IWineRepository {
   public constructor(private readonly prisma: PrismaClient) { }
 
   public async findMany(filters: WineListFilters) {
-    const inventoryWhere = this.buildInventoryWhere(filters);
+    const variationWhere = this.buildVariationWhere(filters);
 
     return this.prisma.wine.findMany({
-      where: this.buildWineListWhere(filters, inventoryWhere),
+      where: this.buildWineListWhere(filters, variationWhere),
       include: {
         winery: true,
         region: true,
-        inventory: {
-          where: inventoryWhere
+        variations: {
+          where: variationWhere,
+          include: {
+            inventory: true
+          }
         }
       },
       orderBy: { createdAt: "desc" }
@@ -26,7 +29,11 @@ export class WineRepository implements IWineRepository {
       include: {
         winery: true,
         region: true,
-        inventory: true
+        variations: {
+          include: {
+            inventory: true
+          }
+        }
       }
     });
   }
@@ -49,7 +56,11 @@ export class WineRepository implements IWineRepository {
       include: {
         winery: true,
         region: true,
-        inventory: true
+        variations: {
+          include: {
+            inventory: true
+          }
+        }
       }
     });
   }
@@ -98,18 +109,16 @@ export class WineRepository implements IWineRepository {
     });
   }
 
-  private buildInventoryWhere(filters: WineListFilters): Prisma.InventoryWhereInput {
+  private buildVariationWhere(filters: WineListFilters): Prisma.WineVariationWhereInput {
     return {
-      isAvailable: true,
-      ...(filters.featuredOnly ? { isFeatured: true } : {}),
-      ...(filters.hasGlass ? { priceGlass: { gt: 0 } } : {}),
-      ...(filters.hasBottle ? { priceBottle: { gt: 0 } } : {})
+      isPublic: true,
+      ...(filters.featuredOnly ? { inventory: { some: { isFeatured: true } } } : {})
     };
   }
 
   private buildWineListWhere(
     filters: WineListFilters,
-    inventoryWhere: Prisma.InventoryWhereInput
+    variationWhere: Prisma.WineVariationWhereInput
   ): Prisma.WineWhereInput {
     return {
       ...(filters.country
@@ -122,8 +131,8 @@ export class WineRepository implements IWineRepository {
         : {}),
       ...(filters.regionId ? { regionId: filters.regionId } : {}),
       ...(filters.wineryId ? { wineryId: filters.wineryId } : {}),
-      inventory: {
-        some: inventoryWhere
+      variations: {
+        some: variationWhere
       }
     };
   }
