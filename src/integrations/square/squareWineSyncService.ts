@@ -1,5 +1,6 @@
 import type { CatalogObject } from "square";
 import type { InventorySyncRow, ISquareSyncRepository } from "@/repositories/squareSync/ISquareSyncRepository";
+import { normalizeSlugSegment } from "@/utils/slug";
 
 export type SquareSyncResult = {
   created: number;
@@ -224,12 +225,7 @@ export class SquareWineSyncService {
   }
 
   private buildSlug(name: string, squareItemId: string): string {
-    const safeName = name
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-");
+    const safeName = normalizeSlugSegment(name);
 
     return `${safeName || "square-item"}-${squareItemId.toLowerCase()}`;
   }

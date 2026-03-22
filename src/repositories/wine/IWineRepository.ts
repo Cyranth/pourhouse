@@ -12,12 +12,12 @@ export type WineWithInventory = WineWithRelations & {
 };
 
 export type WineListFilters = {
-  country?: string;
-  regionId?: string;
-  wineryId?: string;
-  featuredOnly?: boolean;
-  hasGlass?: boolean;
-  hasBottle?: boolean;
+  country?: string | undefined;
+  regionId?: string | undefined;
+  wineryId?: string | undefined;
+  featuredOnly?: boolean | undefined;
+  hasGlass?: boolean | undefined;
+  hasBottle?: boolean | undefined;
 };
 
 export interface IWineRepository {
