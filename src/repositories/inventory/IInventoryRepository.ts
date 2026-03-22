@@ -1,8 +1,12 @@
 import type { Prisma } from "@prisma/client";
 
+export type InventoryRecord = {
+  id: string;
+} & Record<string, unknown>;
+
 export interface IInventoryRepository {
-  findMany(): Promise<unknown[]>;
-  findById(id: string): Promise<unknown | null>;
-  create(input: Prisma.InventoryCreateInput): Promise<unknown>;
-  update(id: string, input: Prisma.InventoryUpdateInput): Promise<unknown>;
+  findMany(): Promise<InventoryRecord[]>;
+  findById(id: string): Promise<InventoryRecord | null>;
+  create(input: Prisma.InventoryCreateInput): Promise<InventoryRecord>;
+  update(id: string, input: Prisma.InventoryUpdateInput): Promise<InventoryRecord>;
 }

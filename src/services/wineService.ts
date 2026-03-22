@@ -3,6 +3,7 @@ import type { IRatingRepository } from "@/repositories/rating/IRatingRepository"
 import type { IWineRepository, WineListFilters, WineWithInventory } from "@/repositories/wine/IWineRepository";
 import type { IWineryRepository } from "@/repositories/winery/IWineryRepository";
 import { AppError } from "@/utils/appError";
+import { normalizeSlugSegment } from "@/utils/slug";
 
 export type WineListItem = {
   id: string;
@@ -233,7 +234,7 @@ export class WineService {
   }
 
   private async generateUniqueSlug(name: string, vintage: number): Promise<string> {
-    const normalizedName = this.slugify(name);
+    const normalizedName = normalizeSlugSegment(name);
     const baseSlug = normalizedName ? `${normalizedName}-${vintage}` : `wine-${vintage}`;
     let candidateSlug = baseSlug;
     let suffix = 2;
@@ -244,18 +245,6 @@ export class WineService {
     }
 
     return candidateSlug;
-  }
-
-  private slugify(value: string): string {
-    return value
-      .normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-+|-+$/g, "");
   }
 
   private inferWineType(wine: WineWithInventory): WineType {

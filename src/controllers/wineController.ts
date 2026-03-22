@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { groupedWinesSchema, listWinesSchema } from "@/models/validation";
 import type { GroupedWinesQuery, ListWinesQuery } from "@/services/wineService";
 import { WineService } from "@/services/wineService";
 
@@ -6,12 +7,14 @@ export class WineController {
   public constructor(private readonly wineService: WineService) { }
 
   public listWines = async (req: Request, res: Response) => {
-    const wines = await this.wineService.getWines(req.query as unknown as ListWinesQuery);
+    const query: ListWinesQuery = listWinesSchema.parse(req.query);
+    const wines = await this.wineService.getWines(query);
     res.status(200).json(wines);
   };
 
   public listGroupedWines = async (req: Request, res: Response) => {
-    const wines = await this.wineService.getGroupedWines(req.query as unknown as GroupedWinesQuery);
+    const query: GroupedWinesQuery = groupedWinesSchema.parse(req.query);
+    const wines = await this.wineService.getGroupedWines(query);
     res.status(200).json(wines);
   };
 
