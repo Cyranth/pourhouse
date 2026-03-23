@@ -111,6 +111,68 @@ export class WineRepository implements IWineRepository {
     filters: WineListFilters,
     variationWhere: Prisma.WineVariationWhereInput
   ): Prisma.WineWhereInput {
+    const glassVariationPredicate: Prisma.WineVariationWhereInput = {
+      servingModeConfig: {
+        is: {
+          servingMode: { in: ["GLASS_5OZ", "GLASS_9OZ"] },
+          isAvailable: true
+        }
+      }
+    };
+
+    const bottleVariationPredicate: Prisma.WineVariationWhereInput = {
+      servingModeConfig: {
+        is: {
+          servingMode: "BOTTLE_750ML",
+          isAvailable: true
+        }
+      }
+    };
+
+    const andClauses: Prisma.WineWhereInput[] = [
+      {
+        variations: {
+          some: variationWhere
+        }
+      }
+    ];
+
+    if (filters.hasGlass === true) {
+      andClauses.push({
+        variations: {
+          some: glassVariationPredicate
+        }
+      });
+    }
+
+    if (filters.hasGlass === false) {
+      andClauses.push({
+        NOT: {
+          variations: {
+            some: glassVariationPredicate
+          }
+        }
+      });
+    }
+
+    if (filters.hasBottle === true) {
+      andClauses.push({
+        variations: {
+          some: bottleVariationPredicate
+        }
+      });
+    }
+
+    if (filters.hasBottle === false) {
+      andClauses.push({
+        NOT: {
+          variations: {
+            some: bottleVariationPredicate
+          }
+        }
+      });
+    }
+
     return {
       ...(filters.country
         ? {
@@ -123,9 +185,7 @@ export class WineRepository implements IWineRepository {
       ...(filters.regionId ? { regionId: filters.regionId } : {}),
       ...(filters.wineryId ? { wineryId: filters.wineryId } : {}),
       ...(filters.featuredOnly ? { inventory: { some: { isFeatured: true } } } : {}),
-      variations: {
-        some: variationWhere
-      }
+      AND: andClauses
     };
   }
 }

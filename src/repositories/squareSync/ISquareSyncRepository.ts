@@ -1,8 +1,9 @@
-import type { Prisma, Wine } from "@prisma/client";
+import type { Prisma, ServingMode, Wine } from "@prisma/client";
 
 export type InventorySyncRow = {
   squareVariationId?: string;
   variationName: string;
+  servingMode: ServingMode;
   price: number;
   volumeOz?: number;
   isPublic?: boolean;
@@ -44,6 +45,7 @@ export interface ISquareSyncRepository {
   updateWineSquareFieldsBySquareItemId(squareItemId: string, input: Prisma.WineUncheckedUpdateInput): Promise<Wine>;
   upsertSquareCatalogItem(input: SquareCatalogItemUpsertInput): Promise<{ id: string }>;
   upsertSquareCatalogVariation(input: SquareCatalogVariationUpsertInput): Promise<void>;
+  findServingModeOverrides(squareVariationIds: string[]): Promise<Record<string, ServingMode>>;
   replaceInventoryForWine(wineId: string, rows: InventorySyncRow[]): Promise<number>;
   findWineVariationsBySquareVariationIds(wineId: string, squareVariationIds: string[]): Promise<WineVariationKey[]>;
 }

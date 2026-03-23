@@ -107,6 +107,29 @@ export class SquareSyncRepository implements ISquareSyncRepository {
     });
   }
 
+  public async findServingModeOverrides(squareVariationIds: string[]) {
+    if (squareVariationIds.length === 0) {
+      return {};
+    }
+
+    const overrides = await this.prisma.squareServingModeOverride.findMany({
+      where: {
+        squareVariationId: {
+          in: squareVariationIds
+        }
+      },
+      select: {
+        squareVariationId: true,
+        servingMode: true
+      }
+    });
+
+    return overrides.reduce<Record<string, (typeof overrides)[number]["servingMode"]>>((acc, row) => {
+      acc[row.squareVariationId] = row.servingMode;
+      return acc;
+    }, {});
+  }
+
   public async findWineVariationsBySquareVariationIds(wineId: string, squareVariationIds: string[]) {
     if (squareVariationIds.length === 0) {
       return [];
@@ -172,7 +195,13 @@ export class SquareSyncRepository implements ISquareSyncRepository {
               price: row.price,
               volumeOz: row.volumeOz ?? null,
               isPublic: row.isPublic ?? true,
-              isDefault: (row.squareVariationId || row.variationName) === selectedDefaultKey
+              isDefault: (row.squareVariationId || row.variationName) === selectedDefaultKey,
+              servingModeConfig: {
+                create: {
+                  servingMode: row.servingMode,
+                  isAvailable: row.isAvailable
+                }
+              }
             }
           })
         )

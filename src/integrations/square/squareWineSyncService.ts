@@ -63,8 +63,11 @@ export class SquareWineSyncService {
         created += 1;
       }
 
+      const variationIds = item.variations.map((variation) => variation.id);
+      const servingModeOverrides = await this.squareSyncRepository.findServingModeOverrides(variationIds);
+
       const inventoryRows = this.catalogParser
-        .mapVariationsToInventoryRows(item.variations, item.id)
+        .mapVariationsToInventoryRows(item.variations, item.id, servingModeOverrides)
         .map((row) => ({
           ...row,
           locationId: `square:${item.id}`
@@ -87,10 +90,10 @@ export class SquareWineSyncService {
         lastSyncedAt: syncedAt
       });
 
-      const variationIds = inventoryRows
+      const variationIdsInRows = inventoryRows
         .map((row) => row.squareVariationId)
         .filter((value): value is string => Boolean(value));
-      const variationLookup = await this.squareSyncRepository.findWineVariationsBySquareVariationIds(wine.id, variationIds);
+      const variationLookup = await this.squareSyncRepository.findWineVariationsBySquareVariationIds(wine.id, variationIdsInRows);
       const wineVariationIdBySquareVariationId = new Map(
         variationLookup
           .filter((variation) => variation.squareVariationId)

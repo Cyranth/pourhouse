@@ -7,6 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum ServingMode {
+  BOTTLE_750ML
+  GLASS_5OZ
+  GLASS_9OZ
+  FLIGHT_2OZ
+  UNKNOWN
+}
+
 model Wine {
   id             String      @id @default(uuid())
   name           String
@@ -47,9 +55,30 @@ model WineVariation {
 
   wine      Wine        @relation(fields: [wineId], references: [id], onDelete: Cascade)
   squareCatalogVariation SquareCatalogVariation?
+  servingModeConfig WineVariationServingMode?
 
   @@index([wineId])
   @@index([squareVariationId])
+}
+
+model WineVariationServingMode {
+  id              String      @id @default(uuid())
+  wineVariationId String      @unique
+  servingMode     ServingMode @default(UNKNOWN)
+  isAvailable     Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+
+  wineVariation   WineVariation @relation(fields: [wineVariationId], references: [id], onDelete: Cascade)
+
+  @@index([servingMode, isAvailable])
+}
+
+model SquareServingModeOverride {
+  id                String      @id @default(uuid())
+  squareVariationId String      @unique
+  servingMode       ServingMode
+  notes             String?
+  createdAt         DateTime    @default(now())
 }
 
 model SquareCatalogItem {

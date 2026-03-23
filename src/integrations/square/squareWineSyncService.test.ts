@@ -18,6 +18,7 @@ function createSquareSyncRepositoryMock(): ISquareSyncRepository {
     updateWineSquareFieldsBySquareItemId: vi.fn().mockResolvedValue({ id: "wine-updated" } as Wine),
     upsertSquareCatalogItem: vi.fn().mockResolvedValue({ id: "square-catalog-item-1" }),
     upsertSquareCatalogVariation: vi.fn().mockResolvedValue(undefined),
+    findServingModeOverrides: vi.fn().mockResolvedValue({}),
     replaceInventoryForWine: vi.fn().mockImplementation(async (_wineId: string, rows: InventorySyncRow[]) => rows.length),
     findWineVariationsBySquareVariationIds: vi.fn().mockResolvedValue([] as WineVariationKey[])
   };
@@ -75,6 +76,7 @@ describe("SquareWineSyncService", () => {
       {
         squareVariationId: "square-var-1",
         variationName: "5oz",
+        servingMode: "GLASS_5OZ",
         price: 15,
         volumeOz: 5,
         isPublic: true,
@@ -87,6 +89,7 @@ describe("SquareWineSyncService", () => {
       {
         squareVariationId: "square-var-2",
         variationName: "9oz",
+        servingMode: "GLASS_9OZ",
         price: 18,
         volumeOz: 9,
         isPublic: true,
@@ -182,6 +185,7 @@ describe("SquareWineSyncService", () => {
       {
         squareVariationId: "dup-var",
         variationName: "8oz",
+        servingMode: "UNKNOWN",
         price: 12,
         volumeOz: 8,
         isPublic: true,
@@ -197,6 +201,7 @@ describe("SquareWineSyncService", () => {
       {
         squareVariationId: "square-item-no-variation-default",
         variationName: "Square Variation square-item-no-variation-default",
+        servingMode: "UNKNOWN",
         price: 0,
         isPublic: true,
         isDefault: false,
@@ -364,6 +369,7 @@ describe("SquareWineSyncService", () => {
       {
         squareVariationId: "square-item-punct-variation",
         variationName: "Square Variation square-item-punct-variation",
+        servingMode: "UNKNOWN",
         price: 0,
         isPublic: true,
         isDefault: false,
@@ -415,6 +421,7 @@ describe("SquareWineSyncService", () => {
       {
         squareVariationId: "var-2oz",
         variationName: "2oz",
+        servingMode: "FLIGHT_2OZ",
         price: 9,
         volumeOz: 2,
         isPublic: false,
@@ -427,6 +434,7 @@ describe("SquareWineSyncService", () => {
       {
         squareVariationId: "var-9oz",
         variationName: "9oz",
+        servingMode: "GLASS_9OZ",
         price: 25,
         volumeOz: 9,
         isPublic: true,
@@ -437,5 +445,85 @@ describe("SquareWineSyncService", () => {
         isFeatured: false
       }
     ]);
+  });
+
+  it("applies serving mode override when configured for square variation id", async () => {
+    const repository = createSquareSyncRepositoryMock();
+    vi.mocked(repository.findServingModeOverrides).mockResolvedValue({
+      "var-override": "BOTTLE_750ML"
+    });
+    const service = new SquareWineSyncService(repository);
+
+    const catalogObjects = [
+      {
+        type: "ITEM",
+        id: "square-item-override",
+        itemData: {
+          name: "Override Test",
+          variations: [
+            {
+              id: "var-override",
+              itemVariationData: {
+                name: "5oz",
+                priceMoney: {
+                  amount: 1500
+                }
+              }
+            }
+          ]
+        }
+      }
+    ] as never[];
+
+    await service.syncCatalogObjects(catalogObjects);
+
+    expect(repository.replaceInventoryForWine).toHaveBeenCalledWith(
+      "wine-created",
+      expect.arrayContaining([
+        expect.objectContaining({
+          squareVariationId: "var-override",
+          servingMode: "BOTTLE_750ML"
+        })
+      ])
+    );
+  });
+
+  it("infers bottle serving mode from variation naming", async () => {
+    const repository = createSquareSyncRepositoryMock();
+    const service = new SquareWineSyncService(repository);
+
+    const catalogObjects = [
+      {
+        type: "ITEM",
+        id: "square-item-bottle",
+        itemData: {
+          name: "Bottle Test",
+          variations: [
+            {
+              id: "var-bottle",
+              itemVariationData: {
+                name: "750ml bottle",
+                priceMoney: {
+                  amount: 4900
+                }
+              }
+            }
+          ]
+        }
+      }
+    ] as never[];
+
+    await service.syncCatalogObjects(catalogObjects);
+
+    expect(repository.replaceInventoryForWine).toHaveBeenCalledWith(
+      "wine-created",
+      expect.arrayContaining([
+        expect.objectContaining({
+          squareVariationId: "var-bottle",
+          servingMode: "BOTTLE_750ML",
+          isPublic: true
+        })
+      ])
+    );
   });
 });

@@ -1,4 +1,5 @@
 import type { CatalogObject } from "square";
+import type { ServingMode } from "@prisma/client";
 import type { InventorySyncRow } from "@/repositories/squareSync/ISquareSyncRepository";
 
 export type ParsedSquareItem = {
@@ -88,7 +89,11 @@ export class SquareCatalogParser {
     return parsedItems;
   }
 
-  public mapVariationsToInventoryRows(variations: ParsedSquareItem["variations"], itemId: string): InventorySyncRow[] {
+  public mapVariationsToInventoryRows(
+    variations: ParsedSquareItem["variations"],
+    itemId: string,
+    servingModeOverrides: Record<string, ServingMode> = {}
+  ): InventorySyncRow[] {
     const source =
       variations.length > 0
         ? variations
@@ -104,15 +109,18 @@ export class SquareCatalogParser {
     return source.map((variation) => {
       const price = variation.priceAmountCents > 0 ? variation.priceAmountCents / 100 : 0;
       const volumeOz = this.parseVolumeOz(variation.name);
-      const isTwoOz = volumeOz === 2;
-      const isNineOz = volumeOz === 9;
+      const servingMode =
+        servingModeOverrides[variation.id] ?? this.inferServingMode(variation.name, volumeOz);
+      const isFlightPour = servingMode === "FLIGHT_2OZ";
+      const isNineOz = servingMode === "GLASS_9OZ";
 
       return {
         squareVariationId: variation.id,
         variationName: variation.name,
+        servingMode,
         price,
         ...(volumeOz !== null ? { volumeOz } : {}),
-        isPublic: !isTwoOz,
+        isPublic: !isFlightPour,
         isDefault: isNineOz,
         locationId: `square:${variation.id}`,
         sealedBottleCount: 0,
@@ -159,5 +167,27 @@ export class SquareCatalogParser {
     }
 
     return Math.round(Number(match[1]));
+  }
+
+  private inferServingMode(name: string, volumeOz: number | null): ServingMode {
+    const normalized = name.trim().toLowerCase();
+
+    if (normalized.includes("750ml") || normalized.includes("bottle")) {
+      return "BOTTLE_750ML";
+    }
+
+    if (normalized.includes("flight") || volumeOz === 2) {
+      return "FLIGHT_2OZ";
+    }
+
+    if (volumeOz === 5) {
+      return "GLASS_5OZ";
+    }
+
+    if (volumeOz === 9) {
+      return "GLASS_9OZ";
+    }
+
+    return "UNKNOWN";
   }
 }
