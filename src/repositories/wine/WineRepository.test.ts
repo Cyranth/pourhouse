@@ -16,11 +16,15 @@ describe("WineRepository", () => {
 
     expect(findMany).toHaveBeenCalledWith({
       where: {
-        variations: {
-          some: {
-            isPublic: true
+        AND: [
+          {
+            variations: {
+              some: {
+                isPublic: true
+              }
+            }
           }
-        }
+        ]
       },
       include: {
         winery: true,
@@ -68,11 +72,112 @@ describe("WineRepository", () => {
             isFeatured: true
           }
         },
+        AND: [
+          {
+            variations: {
+              some: {
+                isPublic: true
+              }
+            }
+          },
+          {
+            variations: {
+              some: {
+                servingModeConfig: {
+                  is: {
+                    servingMode: {
+                      in: ["GLASS_5OZ", "GLASS_9OZ"]
+                    },
+                    isAvailable: true
+                  }
+                }
+              }
+            }
+          },
+          {
+            variations: {
+              some: {
+                servingModeConfig: {
+                  is: {
+                    servingMode: "BOTTLE_750ML",
+                    isAvailable: true
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      include: {
+        winery: true,
+        region: true,
+        inventory: true,
         variations: {
-          some: {
+          where: {
             isPublic: true
           }
         }
+      },
+      orderBy: { createdAt: "desc" }
+    });
+  });
+
+  it("findMany applies negative hasGlass and hasBottle filters", async () => {
+    const findMany = vi.fn().mockResolvedValue([]);
+    const prisma = {
+      wine: {
+        findMany
+      }
+    } as never;
+
+    const repository = new WineRepository(prisma);
+
+    await repository.findMany({
+      hasGlass: false,
+      hasBottle: false
+    });
+
+    expect(findMany).toHaveBeenCalledWith({
+      where: {
+        AND: [
+          {
+            variations: {
+              some: {
+                isPublic: true
+              }
+            }
+          },
+          {
+            NOT: {
+              variations: {
+                some: {
+                  servingModeConfig: {
+                    is: {
+                      servingMode: {
+                        in: ["GLASS_5OZ", "GLASS_9OZ"]
+                      },
+                      isAvailable: true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            NOT: {
+              variations: {
+                some: {
+                  servingModeConfig: {
+                    is: {
+                      servingMode: "BOTTLE_750ML",
+                      isAvailable: true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       },
       include: {
         winery: true,
