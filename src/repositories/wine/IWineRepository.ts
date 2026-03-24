@@ -1,4 +1,14 @@
-import type { Inventory, Prisma, Region, Wine, Winery, WineVariation } from "@prisma/client";
+import type {
+  Flight,
+  FlightWine,
+  Inventory,
+  Prisma,
+  Region,
+  Wine,
+  Winery,
+  WineVariation,
+  WineVariationServingMode
+} from "@prisma/client";
 
 export type WineWithRelations = Wine & {
   winery: Winery;
@@ -7,8 +17,12 @@ export type WineWithRelations = Wine & {
 
 export type WineWithInventory = WineWithRelations & {
   inventory?: Inventory[];
+  flightMemberships?: (FlightWine & {
+    flight: Pick<Flight, "isActive">;
+  })[];
   variations: (WineVariation & {
     inventory?: Inventory[];
+    servingModeConfig?: WineVariationServingMode | null;
   })[];
 };
 

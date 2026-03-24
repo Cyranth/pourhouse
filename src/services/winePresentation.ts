@@ -37,6 +37,32 @@ export type WineListItem = {
   defaultVariation: DefaultVariation | null;
 };
 
+export type PublicWineListItem = {
+  id: string;
+  slug: string;
+  name: string;
+  vintage: number;
+  country: string;
+  description: string;
+  imageUrl: string;
+  winery: {
+    id: string;
+    name: string;
+  };
+  region: {
+    id: string;
+    name: string;
+  };
+  availableByBottle: boolean;
+  availableByGlass: boolean;
+  availableForFlight: boolean;
+};
+
+export type PublicWineDetail = PublicWineListItem & {
+  grapeVarieties: string[];
+  alcoholPercent: number;
+};
+
 export function inferWineType(wine: WineWithInventory): WineType {
   const grapeVarieties = Array.isArray(wine.grapeVarieties)
     ? wine.grapeVarieties.filter((value): value is string => typeof value === "string")
@@ -157,6 +183,39 @@ export function compareWineListItems(
   return compareNullableNumbers(left.item.pricing.bottle, right.item.pricing.bottle, order);
 }
 
+export function toPublicWineListItem(wine: WineWithInventory): PublicWineListItem {
+  return {
+    id: wine.id,
+    slug: wine.slug,
+    name: wine.name,
+    vintage: wine.vintage,
+    country: wine.country,
+    description: wine.description,
+    imageUrl: wine.imageUrl,
+    winery: {
+      id: wine.winery.id,
+      name: wine.winery.name
+    },
+    region: {
+      id: wine.region.id,
+      name: wine.region.name
+    },
+    availableByBottle: hasAvailableServingMode(wine, ["BOTTLE_750ML"]),
+    availableByGlass: hasAvailableServingMode(wine, ["GLASS_5OZ", "GLASS_9OZ"]),
+    availableForFlight: hasAvailableServingMode(wine, ["FLIGHT_2OZ"]) || isInActiveFlight(wine)
+  };
+}
+
+export function toPublicWineDetail(wine: WineWithInventory): PublicWineDetail {
+  const item = toPublicWineListItem(wine);
+
+  return {
+    ...item,
+    grapeVarieties: normalizeGrapeVarieties(wine.grapeVarieties),
+    alcoholPercent: wine.alcoholPercent
+  };
+}
+
 function matchesAny(searchableText: string, candidates: string[]) {
   return candidates.some((candidate) => searchableText.includes(candidate));
 }
@@ -183,4 +242,31 @@ function compareNullableNumbers(left: number | null, right: number | null, order
   }
 
   return compareNumbers(left, right, order);
+}
+
+function hasAvailableServingMode(wine: WineWithInventory, servingModes: string[]) {
+  return wine.variations.some((variation) => {
+    if (!variation.isPublic) {
+      return false;
+    }
+
+    const servingModeConfig = variation.servingModeConfig;
+
+    return (
+      servingModeConfig?.isAvailable === true
+      && servingModes.includes(servingModeConfig.servingMode)
+    );
+  });
+}
+
+function isInActiveFlight(wine: WineWithInventory) {
+  return (wine.flightMemberships ?? []).some((membership) => membership.flight.isActive);
+}
+
+function normalizeGrapeVarieties(grapeVarieties: unknown): string[] {
+  if (!Array.isArray(grapeVarieties)) {
+    return [];
+  }
+
+  return grapeVarieties.filter((value): value is string => typeof value === "string");
 }

@@ -94,11 +94,9 @@ describe("WineController", () => {
             id: "region-1",
             name: "Napa Valley"
           },
-          pricing: {
-            glass: 16,
-            bottle: 68
-          },
-          defaultVariation: null
+          availableByBottle: true,
+          availableByGlass: true,
+          availableForFlight: false
         }
       ],
       page: 2,
@@ -132,11 +130,9 @@ describe("WineController", () => {
             id: "region-1",
             name: "Napa Valley"
           },
-          pricing: {
-            glass: 16,
-            bottle: 68
-          },
-          defaultVariation: null
+          availableByBottle: true,
+          availableByGlass: true,
+          availableForFlight: false
         }
       ],
       page: 2,
@@ -157,7 +153,28 @@ describe("WineController", () => {
       getWineRatings: vi.fn()
     } as unknown as WineService;
 
-    vi.mocked(wineService.getWineBySlug).mockResolvedValue(createWineWithInventory());
+    vi.mocked(wineService.getWineBySlug).mockResolvedValue({
+      id: "w1",
+      slug: "cabernet-2020",
+      name: "Cabernet",
+      vintage: 2020,
+      country: "US",
+      description: "Bold",
+      imageUrl: "https://example.com/wine.png",
+      winery: {
+        id: "winery-1",
+        name: "Alpha Winery"
+      },
+      region: {
+        id: "region-1",
+        name: "Napa Valley"
+      },
+      availableByBottle: true,
+      availableByGlass: true,
+      availableForFlight: false,
+      grapeVarieties: ["Cabernet Sauvignon"],
+      alcoholPercent: 13.5
+    });
 
     const controller = new WineController(wineService);
     const req = { params: { slug: "cabernet-2020" } } as unknown as Request;
@@ -274,11 +291,9 @@ describe("WineController", () => {
                     id: "region-1",
                     name: "Napa Valley"
                   },
-                  pricing: {
-                    glass: 16,
-                    bottle: 68
-                  },
-                  defaultVariation: null
+                  availableByBottle: true,
+                  availableByGlass: true,
+                  availableForFlight: false
                 }
               ]
             }

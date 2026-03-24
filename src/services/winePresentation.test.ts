@@ -1,7 +1,14 @@
 import { Decimal } from "@prisma/client/runtime/library";
 import { describe, expect, it } from "vitest";
 import type { WineWithInventory } from "@/repositories/wine/IWineRepository";
-import { compareWineListItems, inferWineType, toWineListItem, getDefaultVariation } from "@/services/winePresentation";
+import {
+  compareWineListItems,
+  getDefaultVariation,
+  inferWineType,
+  toPublicWineDetail,
+  toPublicWineListItem,
+  toWineListItem
+} from "@/services/winePresentation";
 
 function createWine(overrides: Partial<WineWithInventory> = {}): WineWithInventory {
   return {
@@ -447,5 +454,99 @@ describe("winePresentation", () => {
     const defaultVar = getDefaultVariation(wine);
 
     expect(defaultVar?.volumeOz).toBe(5);
+  });
+
+  it("maps public availability flags from serving modes", () => {
+    const wine = createWine({
+      variations: [
+        {
+          id: "var-private-bottle",
+          wineId: "w1",
+          squareVariationId: null,
+          name: "Private Bottle",
+          price: new Decimal(70),
+          volumeOz: 750,
+          isPublic: false,
+          isDefault: false,
+          createdAt: new Date("2026-03-19T00:00:00.000Z"),
+          servingModeConfig: {
+            servingMode: "BOTTLE_750ML",
+            isAvailable: true
+          } as never,
+          inventory: []
+        },
+        {
+          id: "var-unavailable-glass",
+          wineId: "w1",
+          squareVariationId: null,
+          name: "Glass",
+          price: new Decimal(16),
+          volumeOz: 5,
+          isPublic: true,
+          isDefault: false,
+          createdAt: new Date("2026-03-19T00:00:00.000Z"),
+          servingModeConfig: {
+            servingMode: "GLASS_5OZ",
+            isAvailable: false
+          } as never,
+          inventory: []
+        },
+        {
+          id: "var-bottle",
+          wineId: "w1",
+          squareVariationId: null,
+          name: "Bottle",
+          price: new Decimal(70),
+          volumeOz: 750,
+          isPublic: true,
+          isDefault: false,
+          createdAt: new Date("2026-03-19T00:00:00.000Z"),
+          servingModeConfig: {
+            servingMode: "BOTTLE_750ML",
+            isAvailable: true
+          } as never,
+          inventory: []
+        }
+      ]
+    });
+
+    const item = toPublicWineListItem(wine);
+
+    expect(item.availableByBottle).toBe(true);
+    expect(item.availableByGlass).toBe(false);
+    expect(item.availableForFlight).toBe(false);
+  });
+
+  it("marks availableForFlight when wine is in an active flight", () => {
+    const wine = createWine({
+      flightMemberships: [
+        {
+          id: "membership-1",
+          wineId: "w1",
+          flightId: "flight-1",
+          position: 0,
+          createdAt: new Date("2026-03-19T00:00:00.000Z"),
+          flight: {
+            isActive: true
+          }
+        }
+      ] as never,
+      variations: []
+    });
+
+    expect(toPublicWineListItem(wine).availableForFlight).toBe(true);
+  });
+
+  it("normalizes non-array grape varieties in public detail payload", () => {
+    const wine = createWine({
+      grapeVarieties: {
+        primary: "Cabernet"
+      } as never,
+      variations: []
+    });
+
+    const detail = toPublicWineDetail(wine);
+
+    expect(detail.grapeVarieties).toEqual([]);
   });
 });

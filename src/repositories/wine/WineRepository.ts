@@ -13,8 +13,20 @@ export class WineRepository implements IWineRepository {
         winery: true,
         region: true,
         inventory: true,
+        flightMemberships: {
+          include: {
+            flight: {
+              select: {
+                isActive: true
+              }
+            }
+          }
+        },
         variations: {
-          where: variationWhere
+          where: variationWhere,
+          include: {
+            servingModeConfig: true
+          }
         }
       },
       orderBy: { createdAt: "desc" }
@@ -28,7 +40,20 @@ export class WineRepository implements IWineRepository {
         winery: true,
         region: true,
         inventory: true,
-        variations: true
+        flightMemberships: {
+          include: {
+            flight: {
+              select: {
+                isActive: true
+              }
+            }
+          }
+        },
+        variations: {
+          include: {
+            servingModeConfig: true
+          }
+        }
       }
     });
   }
@@ -52,7 +77,23 @@ export class WineRepository implements IWineRepository {
         winery: true,
         region: true,
         inventory: true,
-        variations: true
+        flightMemberships: {
+          include: {
+            flight: {
+              select: {
+                isActive: true
+              }
+            }
+          }
+        },
+        variations: {
+          where: {
+            isPublic: true
+          },
+          include: {
+            servingModeConfig: true
+          }
+        }
       }
     });
   }
