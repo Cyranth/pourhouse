@@ -30,9 +30,21 @@ describe("WineRepository", () => {
         winery: true,
         region: true,
         inventory: true,
+        flightMemberships: {
+          include: {
+            flight: {
+              select: {
+                isActive: true
+              }
+            }
+          }
+        },
         variations: {
           where: {
             isPublic: true
+          },
+          include: {
+            servingModeConfig: true
           }
         }
       },
@@ -112,9 +124,21 @@ describe("WineRepository", () => {
         winery: true,
         region: true,
         inventory: true,
+        flightMemberships: {
+          include: {
+            flight: {
+              select: {
+                isActive: true
+              }
+            }
+          }
+        },
         variations: {
           where: {
             isPublic: true
+          },
+          include: {
+            servingModeConfig: true
           }
         }
       },
@@ -183,9 +207,21 @@ describe("WineRepository", () => {
         winery: true,
         region: true,
         inventory: true,
+        flightMemberships: {
+          include: {
+            flight: {
+              select: {
+                isActive: true
+              }
+            }
+          }
+        },
         variations: {
           where: {
             isPublic: true
+          },
+          include: {
+            servingModeConfig: true
           }
         }
       },
@@ -211,7 +247,20 @@ describe("WineRepository", () => {
         winery: true,
         region: true,
         inventory: true,
-        variations: true
+        flightMemberships: {
+          include: {
+            flight: {
+              select: {
+                isActive: true
+              }
+            }
+          }
+        },
+        variations: {
+          include: {
+            servingModeConfig: true
+          }
+        }
       }
     });
   });
@@ -268,7 +317,23 @@ describe("WineRepository", () => {
         winery: true,
         region: true,
         inventory: true,
-        variations: true
+        flightMemberships: {
+          include: {
+            flight: {
+              select: {
+                isActive: true
+              }
+            }
+          }
+        },
+        variations: {
+          where: {
+            isPublic: true
+          },
+          include: {
+            servingModeConfig: true
+          }
+        }
       }
     });
   });

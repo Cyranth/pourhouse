@@ -5,34 +5,17 @@ import type { IWineryRepository } from "@/repositories/winery/IWineryRepository"
 import {
   compareWineListItems as compareWineListItemsForDisplay,
   inferWineType as inferWineTypeForDisplay,
+  toPublicWineDetail as toPublicWineDetailForDisplay,
+  toPublicWineListItem as toPublicWineListItemForDisplay,
   toWineListItem as toWineListItemForDisplay,
-  type DefaultVariation
+  type PublicWineDetail,
+  type PublicWineListItem,
+  type WineListItem as SortableWineListItem
 } from "@/services/winePresentation";
 import { AppError } from "@/utils/appError";
 import { normalizeSlugSegment } from "@/utils/slug";
 
-export type WineListItem = {
-  id: string;
-  slug: string;
-  name: string;
-  vintage: number;
-  country: string;
-  description: string;
-  imageUrl: string;
-  winery: {
-    id: string;
-    name: string;
-  };
-  region: {
-    id: string;
-    name: string;
-  };
-  pricing: {
-    glass: number | null;
-    bottle: number | null;
-  };
-  defaultVariation: DefaultVariation | null;
-};
+export type WineListItem = PublicWineListItem;
 
 export type WineType = "red" | "white" | "rose" | "sparkling" | "dessert" | "fortified" | "other";
 
@@ -98,7 +81,8 @@ export class WineService {
     const wines = await this.wineRepository.findMany(this.toWineListFilters(query));
     const sortableWines = wines.map((wine) => ({
       wine,
-      item: this.toWineListItem(wine)
+      sortItem: this.toSortableWineListItem(wine),
+      item: this.toPublicWineListItem(wine)
     }));
 
     sortableWines.sort((left, right) => this.compareWineListItems(left, right, query.sort, query.order));
@@ -130,7 +114,7 @@ export class WineService {
         wines: []
       };
 
-      region.wines.push(this.toWineListItem(wine));
+      region.wines.push(this.toPublicWineListItem(wine));
       regionMap.set(wine.region.id, region);
       groupedByType.set(wineType, regionMap);
     }
@@ -166,7 +150,7 @@ export class WineService {
       throw new AppError("Wine not found", 404);
     }
 
-    return wine;
+    return this.toPublicWineDetail(wine);
   }
 
   public async resolveWineSlugFromQrCode(code: string) {
@@ -259,12 +243,17 @@ export class WineService {
   }
 
   private compareWineListItems(
-    left: { wine: WineWithInventory; item: WineListItem },
-    right: { wine: WineWithInventory; item: WineListItem },
+    left: { wine: WineWithInventory; sortItem: SortableWineListItem },
+    right: { wine: WineWithInventory; sortItem: SortableWineListItem },
     sort: WineListSort,
     order: SortOrder
   ) {
-    return compareWineListItemsForDisplay(left, right, sort, order);
+    return compareWineListItemsForDisplay(
+      { wine: left.wine, item: left.sortItem },
+      { wine: right.wine, item: right.sortItem },
+      sort,
+      order
+    );
   }
 
   private compareNumbers(left: number, right: number, order: SortOrder) {
@@ -291,7 +280,15 @@ export class WineService {
     return this.compareNumbers(left, right, order);
   }
 
-  private toWineListItem(wine: WineWithInventory): WineListItem {
+  private toSortableWineListItem(wine: WineWithInventory): SortableWineListItem {
     return toWineListItemForDisplay(wine);
+  }
+
+  private toPublicWineListItem(wine: WineWithInventory): PublicWineListItem {
+    return toPublicWineListItemForDisplay(wine);
+  }
+
+  private toPublicWineDetail(wine: WineWithInventory): PublicWineDetail {
+    return toPublicWineDetailForDisplay(wine);
   }
 }

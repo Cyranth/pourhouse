@@ -206,16 +206,9 @@ describe("WineService", () => {
             id: "region-1",
             name: "Napa Valley"
           },
-          pricing: {
-            glass: 18,
-            bottle: 68
-          },
-          defaultVariation: {
-            id: "var-1",
-            name: "By the Glass",
-            price: 18,
-            volumeOz: 6
-          }
+          availableByBottle: false,
+          availableByGlass: false,
+          availableForFlight: false
         }
       ],
       page: 1,
@@ -226,7 +219,7 @@ describe("WineService", () => {
     expect(wineRepository.findMany).toHaveBeenCalledWith({});
   });
 
-  it("returns null pricing when a wine has no available inventory rows", async () => {
+  it("returns availability flags for wines in public list payloads", async () => {
     const { service, wineRepository } = createService();
     const wines: WineWithInventory[] = [
       {
@@ -280,11 +273,9 @@ describe("WineService", () => {
             id: "region-2",
             name: "Mosel"
           },
-          pricing: {
-            glass: null,
-            bottle: null
-          },
-          defaultVariation: null
+          availableByBottle: false,
+          availableByGlass: false,
+          availableForFlight: false
         }
       ],
       page: 1,
@@ -409,16 +400,9 @@ describe("WineService", () => {
             id: "region-1",
             name: "Napa Valley"
           },
-          pricing: {
-            glass: 20,
-            bottle: 80
-          },
-          defaultVariation: {
-            id: "var-1",
-            name: "By the Glass",
-            price: 20,
-            volumeOz: 6
-          }
+          availableByBottle: false,
+          availableByGlass: false,
+          availableForFlight: false
         }
       ],
       page: 2,
@@ -484,11 +468,9 @@ describe("WineService", () => {
             id: "region-1",
             name: "Napa Valley"
           },
-          pricing: {
-            glass: null,
-            bottle: null
-          },
-          defaultVariation: null
+          availableByBottle: false,
+          availableByGlass: false,
+          availableForFlight: false
         },
         {
           id: "w1",
@@ -506,11 +488,9 @@ describe("WineService", () => {
             id: "region-1",
             name: "Napa Valley"
           },
-          pricing: {
-            glass: null,
-            bottle: null
-          },
-          defaultVariation: null
+          availableByBottle: false,
+          availableByGlass: false,
+          availableForFlight: false
         }
       ],
       page: 1,
@@ -657,16 +637,9 @@ describe("WineService", () => {
                     id: "region-red",
                     name: "Napa Valley"
                   },
-                  pricing: {
-                    glass: 18,
-                    bottle: 72
-                  },
-                  defaultVariation: {
-                    id: "var-r1",
-                    name: "By the Glass",
-                    price: 18,
-                    volumeOz: 6
-                  }
+                  availableByBottle: false,
+                  availableByGlass: false,
+                  availableForFlight: false
                 }
               ]
             }
@@ -695,16 +668,9 @@ describe("WineService", () => {
                     id: "region-white",
                     name: "Rias Baixas"
                   },
-                  pricing: {
-                    glass: 15,
-                    bottle: 60
-                  },
-                  defaultVariation: {
-                    id: "var-w1",
-                    name: "By the Glass",
-                    price: 15,
-                    volumeOz: 6
-                  }
+                  availableByBottle: false,
+                  availableByGlass: false,
+                  availableForFlight: false
                 }
               ]
             }
@@ -752,11 +718,9 @@ describe("WineService", () => {
                     id: "region-1",
                     name: "Napa Valley"
                   },
-                  pricing: {
-                    glass: null,
-                    bottle: null
-                  },
-                  defaultVariation: null
+                  availableByBottle: false,
+                  availableByGlass: false,
+                  availableForFlight: false
                 }
               ]
             }
@@ -870,14 +834,14 @@ describe("WineService", () => {
   it("covers name and bottle sorting branches in compareWineListItems", () => {
     const { service } = createService();
     const compareWineListItems = service["compareWineListItems"].bind(service) as (
-      left: { wine: WineWithInventory; item: ReturnType<WineService["toWineListItem"]> },
-      right: { wine: WineWithInventory; item: ReturnType<WineService["toWineListItem"]> },
+      left: { wine: WineWithInventory; sortItem: ReturnType<WineService["toSortableWineListItem"]> },
+      right: { wine: WineWithInventory; sortItem: ReturnType<WineService["toSortableWineListItem"]> },
       sort: "createdAt" | "name" | "priceGlass" | "priceBottle",
       order: "asc" | "desc"
     ) => number;
-    const toWineListItem = service["toWineListItem"].bind(service) as (
+    const toSortableWineListItem = service["toSortableWineListItem"].bind(service) as (
       wine: WineWithInventory
-    ) => ReturnType<WineService["toWineListItem"]>;
+    ) => ReturnType<WineService["toSortableWineListItem"]>;
 
     const leftWine = createWineWithInventory();
     leftWine.name = "Merlot";
@@ -959,8 +923,8 @@ describe("WineService", () => {
 
     expect(
       compareWineListItems(
-        { wine: leftWine, item: toWineListItem(leftWine) },
-        { wine: rightWine, item: toWineListItem(rightWine) },
+        { wine: leftWine, sortItem: toSortableWineListItem(leftWine) },
+        { wine: rightWine, sortItem: toSortableWineListItem(rightWine) },
         "name",
         "desc"
       )
@@ -968,8 +932,8 @@ describe("WineService", () => {
 
     expect(
       compareWineListItems(
-        { wine: leftWine, item: toWineListItem(leftWine) },
-        { wine: rightWine, item: toWineListItem(rightWine) },
+        { wine: leftWine, sortItem: toSortableWineListItem(leftWine) },
+        { wine: rightWine, sortItem: toSortableWineListItem(rightWine) },
         "priceBottle",
         "asc"
       )
@@ -979,14 +943,14 @@ describe("WineService", () => {
   it("covers the createdAt sorting branch in compareWineListItems", () => {
     const { service } = createService();
     const compareWineListItems = service["compareWineListItems"].bind(service) as (
-      left: { wine: WineWithInventory; item: ReturnType<WineService["toWineListItem"]> },
-      right: { wine: WineWithInventory; item: ReturnType<WineService["toWineListItem"]> },
+      left: { wine: WineWithInventory; sortItem: ReturnType<WineService["toSortableWineListItem"]> },
+      right: { wine: WineWithInventory; sortItem: ReturnType<WineService["toSortableWineListItem"]> },
       sort: "createdAt" | "name" | "priceGlass" | "priceBottle",
       order: "asc" | "desc"
     ) => number;
-    const toWineListItem = service["toWineListItem"].bind(service) as (
+    const toSortableWineListItem = service["toSortableWineListItem"].bind(service) as (
       wine: WineWithInventory
-    ) => ReturnType<WineService["toWineListItem"]>;
+    ) => ReturnType<WineService["toSortableWineListItem"]>;
 
     const olderWine = createWineWithInventory();
     olderWine.createdAt = new Date("2026-03-18T00:00:00.000Z");
@@ -996,8 +960,8 @@ describe("WineService", () => {
 
     expect(
       compareWineListItems(
-        { wine: olderWine, item: toWineListItem(olderWine) },
-        { wine: newerWine, item: toWineListItem(newerWine) },
+        { wine: olderWine, sortItem: toSortableWineListItem(olderWine) },
+        { wine: newerWine, sortItem: toSortableWineListItem(newerWine) },
         "createdAt",
         "desc"
       )
@@ -1018,7 +982,28 @@ describe("WineService", () => {
 
     vi.mocked(wineRepository.findBySlugWithInventory).mockResolvedValue(wine);
 
-    await expect(service.getWineBySlug("cabernet-2020")).resolves.toEqual(wine);
+    await expect(service.getWineBySlug("cabernet-2020")).resolves.toEqual({
+      id: "w1",
+      slug: "cabernet-2020",
+      name: "Cabernet",
+      vintage: 2020,
+      country: "US",
+      description: "Bold",
+      imageUrl: "https://example.com/wine.png",
+      winery: {
+        id: "winery-1",
+        name: "Alpha Winery"
+      },
+      region: {
+        id: "region-1",
+        name: "Napa Valley"
+      },
+      availableByBottle: false,
+      availableByGlass: false,
+      availableForFlight: false,
+      grapeVarieties: ["Cabernet Sauvignon"],
+      alcoholPercent: 13.5
+    });
   });
 
   it("resolves QR code by slug when a slug match exists", async () => {
