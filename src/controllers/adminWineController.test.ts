@@ -39,7 +39,16 @@ describe('adminWineController', () => {
   it('should create wine with valid input', async () => {
     const req = {
       body: {
-        name: 'Wine', vintage: 2020, wineryId: 'uuid1', regionId: 'uuid2', country: 'US', grapeVarieties: ['Cabernet'], alcoholPercent: 13.5, description: 'desc', imageUrl: 'http://img', squareItemId: 'sqid'
+        name: 'Wine',
+        vintage: 2020,
+        wineryId: '11111111-1111-1111-1111-111111111111',
+        regionId: '22222222-2222-2222-2222-222222222222',
+        country: 'US',
+        grapeVarieties: ['Cabernet'],
+        alcoholPercent: 13.5,
+        description: 'desc',
+        imageUrl: 'http://img.com',
+        squareItemId: 'sqid'
       }
     } as unknown as Request;
     const res = mockRes();
