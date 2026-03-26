@@ -24,15 +24,17 @@ const mockRes = () => {
 };
 
 describe('adminWineController', () => {
+  let service: any;
   beforeEach(() => {
     vi.clearAllMocks();
+    service = adminWineService as any;
   });
 
   it('should list wines', async () => {
     const req = {} as Request;
     const res = mockRes();
     const wines = [{ id: '1', name: 'Test Wine' }];
-    adminWineService.listWines.mockResolvedValue(wines);
+    service.listWines.mockResolvedValue(wines);
     await adminWineController.listWines(req, res);
     expect(res.json).toHaveBeenCalledWith(wines);
   });
@@ -40,7 +42,7 @@ describe('adminWineController', () => {
   it('should handle error in listWines', async () => {
     const req = {} as Request;
     const res = mockRes();
-    adminWineService.listWines.mockRejectedValue(new Error('fail'));
+    service.listWines.mockRejectedValue(new Error('fail'));
     await adminWineController.listWines(req, res);
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Failed to list wines' }));
@@ -49,7 +51,7 @@ describe('adminWineController', () => {
   it('should handle non-Error object in listWines error branch', async () => {
     const req = {} as Request;
     const res = mockRes();
-    adminWineService.listWines.mockRejectedValue('fail-string');
+    service.listWines.mockRejectedValue('fail-string');
     await adminWineController.listWines(req, res);
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Failed to list wines', details: 'fail-string' }));
@@ -58,6 +60,7 @@ describe('adminWineController', () => {
   it('should create wine with valid input', async () => {
     const input = {
       name: 'Wine',
+      slug: 'wine',
       vintage: 2020,
       wineryId: '550e8400-e29b-41d4-a716-446655440000',
       regionId: '123e4567-e89b-12d3-a456-426614174000',
@@ -78,7 +81,7 @@ describe('adminWineController', () => {
     const req = { body: input } as unknown as Request;
     const res = mockRes();
     const wine = { id: '1', name: 'Wine' };
-    adminWineService.createWine.mockResolvedValue(wine);
+    service.createWine.mockResolvedValue(wine);
     await adminWineController.createWine(req, res);
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith(wine);
@@ -87,10 +90,11 @@ describe('adminWineController', () => {
   it('should handle non-Zod error in createWine', async () => {
     const req = { body: { name: 'Wine' } } as unknown as Request;
     const res = mockRes();
-    adminWineService.createWine.mockRejectedValue(new Error('fail'));
+    service.createWine.mockRejectedValue(new Error('fail'));
     // valid input, but service throws
     const validInput = {
       name: 'Wine',
+      slug: 'wine',
       vintage: 2020,
       wineryId: '550e8400-e29b-41d4-a716-446655440000',
       regionId: '123e4567-e89b-12d3-a456-426614174000',
@@ -111,6 +115,7 @@ describe('adminWineController', () => {
     const req = {
       body: {
         name: 'Wine',
+        slug: 'wine',
         vintage: 2020,
         wineryId: '550e8400-e29b-41d4-a716-446655440000',
         regionId: '123e4567-e89b-12d3-a456-426614174000',
@@ -123,7 +128,7 @@ describe('adminWineController', () => {
       }
     } as unknown as Request;
     const res = mockRes();
-    adminWineService.createWine.mockRejectedValue('fail-string');
+    service.createWine.mockRejectedValue('fail-string');
     await adminWineController.createWine(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Failed to create wine', details: 'fail-string' }));
