@@ -20,13 +20,17 @@ export const listWines = async (req: Request, res: Response) => {
 export const createWine = async (req: Request, res: Response) => {
   try {
     const parsed = createWineSchema.parse(req.body);
+    // Ensure slug is present (required by Prisma)
+    if (!parsed.slug) {
+      parsed.slug = parsed.name.toLowerCase().replace(/\s+/g, '-');
+    }
     const wine = await adminWineService.createWine(parsed);
     res.status(201).json(wine);
   } catch (err) {
     if (err instanceof z.ZodError) {
       // eslint-disable-next-line no-console
-      console.error('Zod validation error:', err.errors);
-      res.status(422).json({ error: 'Validation failed', details: err.errors });
+      console.error('Zod validation error:', err.issues);
+      res.status(422).json({ error: 'Validation failed', details: err.issues });
     } else {
       res.status(400).json({ error: 'Failed to create wine', details: err instanceof Error ? err.message : err });
     }
@@ -39,11 +43,11 @@ export const updateWine = async (req: Request, res: Response) => {
   try {
     // Allow partial updates: use .partial() on the schema
     const parsed = createWineSchema.partial().parse(req.body);
-    const wine = await adminWineService.updateWine(req.params.id, parsed);
+    const wine = await adminWineService.updateWine(String(req.params.id), parsed);
     res.json(wine);
   } catch (err) {
     if (err instanceof z.ZodError) {
-      res.status(422).json({ error: 'Validation failed', details: err.errors });
+      res.status(422).json({ error: 'Validation failed', details: err.issues });
     } else {
       res.status(400).json({ error: 'Failed to update wine', details: err instanceof Error ? err.message : err });
     }
@@ -53,7 +57,7 @@ export const updateWine = async (req: Request, res: Response) => {
 
 export const deleteWine = async (req: Request, res: Response) => {
   try {
-    await adminWineService.deleteWine(req.params.id);
+    await adminWineService.deleteWine(String(req.params.id));
     res.status(204).send();
   } catch (err) {
     res.status(400).json({ error: 'Failed to delete wine', details: err instanceof Error ? err.message : err });
