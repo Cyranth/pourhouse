@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+}
+
 enum ServingMode {
   BOTTLE_750ML
   GLASS_5OZ
@@ -190,11 +195,13 @@ model Inventory {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  createdAt DateTime @default(now())
+  id           String       @id @default(uuid())
+  email        String       @unique
+  password     String?
+  name         String
+  authProvider AuthProvider @default(LOCAL)
+  googleSubject String?     @unique
+  createdAt    DateTime     @default(now())
 
   ratings Rating[]
 }
