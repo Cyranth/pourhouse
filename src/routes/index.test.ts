@@ -36,6 +36,15 @@ describe("routes index", () => {
     expect(response.text).toContain("/static/wine-list-embed.js");
   });
 
+  it("serves the admin wines frontend shell", async () => {
+    const response = await request(app).get("/admin/wines");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toContain("text/html");
+    expect(response.text).toContain("id=\"admin-wines-root\"");
+    expect(response.text).toContain("/static/admin-wines.js");
+  });
+
   it("serves embeddable wine list static assets", async () => {
     const response = await request(app).get("/static/wine-list-embed-loader.js");
 
@@ -44,8 +53,23 @@ describe("routes index", () => {
     expect(response.text).toContain("createPourhouseWineListEmbed");
   });
 
+  it("serves admin wines static assets", async () => {
+    const response = await request(app).get("/static/admin-wines.js");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toContain("javascript");
+    expect(response.text).toContain("loadAdminBootstrap");
+  });
+
   it("blocks unauthorized access to admin wine routes", async () => {
     const response = await request(app).get("/api/admin/wines");
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ message: "Unauthorized" });
+  });
+
+  it("blocks unauthorized access to admin wine options", async () => {
+    const response = await request(app).get("/api/admin/wine-options");
 
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ message: "Unauthorized" });
