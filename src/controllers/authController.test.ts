@@ -16,13 +16,12 @@ function createResponse() {
 }
 
 describe("AuthController", () => {
-  it("register returns 201 with payload", async () => {
+  it("authenticateWithGoogle returns 200 with payload", async () => {
     const authService = {
-      registerUser: vi.fn(),
-      loginUser: vi.fn()
+      authenticateWithGoogle: vi.fn()
     } as unknown as AuthService;
 
-    vi.mocked(authService.registerUser).mockResolvedValue({
+    vi.mocked(authService.authenticateWithGoogle).mockResolvedValue({
       token: "t",
       user: {
         id: "u",
@@ -33,47 +32,12 @@ describe("AuthController", () => {
     });
 
     const controller = new AuthController(authService);
-    const req = { body: { email: "u@example.com" } } as Request;
+    const req = { body: { authorizationCode: "auth-code" } } as Request;
     const res = createResponse();
 
-    await controller.register(req, res);
+    await controller.authenticateWithGoogle(req, res);
 
-    expect(authService.registerUser).toHaveBeenCalledWith(req.body);
-    expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.json).toHaveBeenCalledWith({
-      token: "t",
-      user: {
-        id: "u",
-        email: "u@example.com",
-        name: "User",
-        createdAt: new Date("2026-01-01T00:00:00.000Z")
-      }
-    });
-  });
-
-  it("login returns 200 with payload", async () => {
-    const authService = {
-      registerUser: vi.fn(),
-      loginUser: vi.fn()
-    } as unknown as AuthService;
-
-    vi.mocked(authService.loginUser).mockResolvedValue({
-      token: "t",
-      user: {
-        id: "u",
-        email: "u@example.com",
-        name: "User",
-        createdAt: new Date("2026-01-01T00:00:00.000Z")
-      }
-    });
-
-    const controller = new AuthController(authService);
-    const req = { body: { email: "u@example.com" } } as Request;
-    const res = createResponse();
-
-    await controller.login(req, res);
-
-    expect(authService.loginUser).toHaveBeenCalledWith(req.body);
+    expect(authService.authenticateWithGoogle).toHaveBeenCalledWith(req.body);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
       token: "t",

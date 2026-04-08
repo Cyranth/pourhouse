@@ -19,6 +19,49 @@ describe("UserRepository", () => {
     });
   });
 
+  it("findByGoogleSubject queries the user by Google subject", async () => {
+    const findUnique = vi.fn().mockResolvedValue(null);
+    const prisma = {
+      user: {
+        findUnique
+      }
+    } as never;
+
+    const repository = new UserRepository(prisma);
+
+    await repository.findByGoogleSubject("google-subject-1");
+
+    expect(findUnique).toHaveBeenCalledWith({
+      where: { googleSubject: "google-subject-1" }
+    });
+  });
+
+  it("updateGoogleIdentityById updates Google identity fields", async () => {
+    const update = vi.fn().mockResolvedValue(null);
+    const prisma = {
+      user: {
+        update
+      }
+    } as never;
+
+    const repository = new UserRepository(prisma);
+
+    await repository.updateGoogleIdentityById({
+      userId: "user-1",
+      googleSubject: "google-subject-1",
+      name: "Updated Name"
+    });
+
+    expect(update).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      data: {
+        googleSubject: "google-subject-1",
+        authProvider: "GOOGLE",
+        name: "Updated Name"
+      }
+    });
+  });
+
   it("create forwards the user input", async () => {
     const create = vi.fn().mockResolvedValue(null);
     const prisma = {

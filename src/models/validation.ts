@@ -16,15 +16,9 @@ const wineListFilterSchema = z.object({
   hasBottle: booleanQuerySchema.optional()
 });
 
-export const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  name: z.string().min(2)
-});
-
-export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1)
+export const googleAuthSchema = z.object({
+  authorizationCode: z.string().min(1),
+  redirectUri: z.string().url().optional()
 });
 
 export const createWineSchema = z.object({
