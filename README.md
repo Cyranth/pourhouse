@@ -346,6 +346,6 @@ Seed includes:
 - Wineries
 - Wines
 - Inventory records
-- Default user (`admin@pourhousewineco.com`, password `password123`)
+- Default user email (`admin@pourhousewineco.com`) for Google identity linking and role assignment
 
-Change seeded credentials before production use.
+Grant or revoke admin access with `npm run admin:grant -- <email>` and `npm run admin:revoke -- <email>`.

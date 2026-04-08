@@ -81,9 +81,9 @@ The seed script at `prisma/seed.ts` populates the database with initial referenc
 - Wineries
 - Wines
 - Inventory records
-- Default user (`admin@pourhousewineco.com`, password `password123`)
+- Default user email (`admin@pourhousewineco.com`) for Google identity linking and role assignment
 
-> Change the seeded credentials before deploying to any shared or production environment.
+> Use the admin role scripts to grant/revoke admin access as needed.
 
 Run the seed:
 
