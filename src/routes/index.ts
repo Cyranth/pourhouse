@@ -6,6 +6,7 @@ import ratingRoutes from "./ratingRoutes";
 
 import wineRoutes from "./wineRoutes";
 import adminWineRoutes from "./adminWineRoutes";
+import adminReferenceRoutes from "./adminReferenceRoutes";
 
 const router = Router();
 
@@ -16,6 +17,7 @@ router.get("/health", (_req, res) => {
 router.use("/auth", authRoutes);
 router.use("/wines", wineRoutes);
 router.use("/admin/wines", adminWineRoutes);
+router.use("/admin", adminReferenceRoutes);
 router.use("/inventory", inventoryRoutes);
 router.use("/ratings", ratingRoutes);
 router.use("/flights", flightRoutes);

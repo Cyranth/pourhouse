@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pourhouse Admin Wines</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/admin-wines.css">
+</head>
+<body>
+  <div class="page-noise" aria-hidden="true"></div>
+  <main class="admin-shell" id="admin-wines-root">
+    <section class="hero-panel">
+      <p class="eyebrow">Pourhouse Wine Co. Admin</p>
+      <h1>Wine management, without touching the database.</h1>
+      <p class="hero-copy">Use the admin token to load the current catalog, edit wine records, create new entries, and remove outdated ones.</p>
+
+      <form class="token-form" id="admin-token-form">
+        <label class="field-label" for="admin-token">Admin API token</label>
+        <div class="token-row">
+          <input id="admin-token" name="admin-token" type="password" autocomplete="off" placeholder="Paste bearer token" required>
+          <button type="submit" class="button button--primary">Load workspace</button>
+        </div>
+        <label class="checkbox-row">
+          <input id="remember-token" type="checkbox">
+          <span>Remember token on this browser</span>
+        </label>
+      </form>
+
+      <div class="status-banner" id="admin-status" role="status" aria-live="polite">Waiting for admin token.</div>
+    </section>
+
+    <section class="workspace-grid">
+      <article class="panel panel--form">
+        <div class="panel-heading">
+          <div>
+            <p class="panel-kicker">Editor</p>
+            <h2 id="editor-title">Create a new wine</h2>
+          </div>
+          <button type="button" class="button button--ghost" id="reset-editor">New record</button>
+        </div>
+
+        <form class="wine-form" id="wine-form">
+          <input id="wine-id" name="wine-id" type="hidden">
+
+          <div class="form-grid">
+            <label>
+              <span>Name</span>
+              <input id="name" name="name" type="text" required>
+            </label>
+
+            <label>
+              <span>Vintage</span>
+              <input id="vintage" name="vintage" type="number" min="1900" max="2100" required>
+            </label>
+
+            <label>
+              <span>Winery</span>
+              <select id="wineryId" name="wineryId" required></select>
+            </label>
+
+            <label>
+              <span>Region</span>
+              <select id="regionId" name="regionId" required></select>
+            </label>
+
+            <label>
+              <span>Country</span>
+              <input id="country" name="country" type="text" required>
+            </label>
+
+            <label>
+              <span>Alcohol %</span>
+              <input id="alcoholPercent" name="alcoholPercent" type="number" min="0" max="100" step="0.1" required>
+            </label>
+
+            <label class="field-span-2">
+              <span>Grape varieties</span>
+              <input id="grapeVarieties" name="grapeVarieties" type="text" placeholder="Syrah, Mourvedre, Grenache" required>
+            </label>
+
+            <label class="field-span-2">
+              <span>Image URL</span>
+              <input id="imageUrl" name="imageUrl" type="url" placeholder="https://..." required>
+            </label>
+
+            <label class="field-span-2">
+              <span>Square item ID</span>
+              <input id="squareItemId" name="squareItemId" type="text" placeholder="Optional">
+            </label>
+
+            <label class="field-span-2">
+              <span>Description</span>
+              <textarea id="description" name="description" rows="5" required></textarea>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="button button--primary" id="save-wine">Save wine</button>
+            <button type="button" class="button button--ghost" id="delete-wine" disabled>Delete selected</button>
+          </div>
+        </form>
+      </article>
+
+      <article class="panel panel--list">
+        <div class="panel-heading">
+          <div>
+            <p class="panel-kicker">Catalog</p>
+            <h2>Current wines</h2>
+          </div>
+          <button type="button" class="button button--ghost" id="refresh-wines">Refresh</button>
+        </div>
+
+        <label class="search-field" for="wine-search">
+          <span>Search</span>
+          <input id="wine-search" type="search" placeholder="Filter by wine, winery, region, or country">
+        </label>
+
+        <div class="wine-list" id="wine-list" aria-live="polite">
+          <p class="empty-state">Load the workspace to view wines.</p>
+        </div>
+      </article>
+    </section>
+  </main>
+  <script src="/static/admin-wines.js" defer></script>
+</body>
+</html>
