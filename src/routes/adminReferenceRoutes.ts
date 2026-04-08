@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { adminAuthMiddleware } from "@/middleware/adminAuthMiddleware";
+import { adminAuthMiddleware } from "@/container";
 import { listAdminWineOptions } from "@/controllers/adminReferenceController";
 
 const router = Router();

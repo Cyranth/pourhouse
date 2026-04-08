@@ -11,6 +11,7 @@ import { RegionRepository } from "@/repositories/region/RegionRepository";
 import { UserRepository } from "@/repositories/user/UserRepository";
 import { WineRepository } from "@/repositories/wine/WineRepository";
 import { WineryRepository } from "@/repositories/winery/WineryRepository";
+import { createAdminAuthMiddleware } from "@/middleware/adminAuthMiddleware";
 import { AuthService } from "@/services/authService";
 import { FlightService } from "@/services/flightService";
 import { InventoryService } from "@/services/inventoryService";
@@ -35,6 +36,8 @@ const inventoryService = new InventoryService(inventoryRepository);
 const ratingService = new RatingService(ratingRepository, wineRepository);
 const flightService = new FlightService(flightRepository, wineRepository);
 const authService = new AuthService(userRepository);
+
+export const adminAuthMiddleware = createAdminAuthMiddleware(userRepository);
 
 export const authController = new AuthController(authService);
 export const wineController = new WineController(wineService);

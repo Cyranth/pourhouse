@@ -1,10 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "@/utils/appError";
 import { verifyToken } from "@/utils/jwt";
-import { prisma } from "@/config/prisma";
-import { UserRepository } from "@/repositories/user/UserRepository";
-
-const userRepository = new UserRepository(prisma);
+import type { IUserRepository } from "@/repositories/user/IUserRepository";
 
 function logDeniedAdminAccess(
   req: Request,
@@ -18,36 +15,38 @@ function logDeniedAdminAccess(
   });
 }
 
-export async function adminAuthMiddleware(req: Request, _res: Response, next: NextFunction) {
-  const authHeader = req.headers.authorization;
+export function createAdminAuthMiddleware(userRepository: IUserRepository) {
+  return async function adminAuthMiddleware(req: Request, _res: Response, next: NextFunction) {
+    const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    logDeniedAdminAccess(req, "missing_header");
-    throw new AppError("Unauthorized", 401);
-  }
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      logDeniedAdminAccess(req, "missing_header");
+      throw new AppError("Unauthorized", 401);
+    }
 
-  const token = authHeader.replace("Bearer ", "").trim();
-  let payload;
+    const token = authHeader.replace("Bearer ", "").trim();
+    let payload;
 
-  try {
-    payload = verifyToken(token);
-  } catch {
-    logDeniedAdminAccess(req, "invalid_token");
-    throw new AppError("Unauthorized", 401);
-  }
+    try {
+      payload = verifyToken(token);
+    } catch {
+      logDeniedAdminAccess(req, "invalid_token");
+      throw new AppError("Unauthorized", 401);
+    }
 
-  const user = await userRepository.findById(payload.userId);
+    const user = await userRepository.findById(payload.userId);
 
-  if (!user || user.role !== "ADMIN") {
-    logDeniedAdminAccess(req, "invalid_role");
-    throw new AppError("Unauthorized", 401);
-  }
+    if (!user || user.role !== "ADMIN") {
+      logDeniedAdminAccess(req, "invalid_role");
+      throw new AppError("Unauthorized", 401);
+    }
 
-  req.user = {
-    id: payload.userId,
-    email: payload.email,
-    role: user.role
+    req.user = {
+      id: payload.userId,
+      email: payload.email,
+      role: user.role
+    };
+
+    next();
   };
-
-  next();
 }

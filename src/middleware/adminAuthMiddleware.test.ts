@@ -1,33 +1,15 @@
 import type { NextFunction, Request, Response } from "express";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { IUserRepository } from "@/repositories/user/IUserRepository";
 import { AppError } from "@/utils/appError";
-
-const { findById, verifyToken, MockUserRepository } = vi.hoisted(() => {
-  const findById = vi.fn();
-  const verifyToken = vi.fn();
-
-  class MockUserRepository {
-    findById = findById;
-  }
-
-  return {
-    findById,
-    verifyToken,
-    MockUserRepository
-  };
-});
-
-vi.mock("@/repositories/user/UserRepository", () => ({
-  UserRepository: MockUserRepository
-}));
-
-vi.mock("@/utils/jwt", () => ({
-  verifyToken
-}));
-
-import { adminAuthMiddleware } from "@/middleware/adminAuthMiddleware";
+import * as jwtUtils from "@/utils/jwt";
+import { createAdminAuthMiddleware } from "@/middleware/adminAuthMiddleware";
 
 describe("adminAuthMiddleware", () => {
+  const findById = vi.fn();
+  const userRepository = { findById } as unknown as IUserRepository;
+  const adminAuthMiddleware = createAdminAuthMiddleware(userRepository);
+
   beforeEach(() => {
     vi.spyOn(console, "warn").mockImplementation(() => { });
     vi.clearAllMocks();
@@ -65,7 +47,7 @@ describe("adminAuthMiddleware", () => {
       headers: { authorization: "Bearer invalid" }
     } as unknown as Request;
 
-    verifyToken.mockImplementation(() => {
+    vi.spyOn(jwtUtils, "verifyToken").mockImplementation(() => {
       throw new Error("invalid token");
     });
 
@@ -87,7 +69,7 @@ describe("adminAuthMiddleware", () => {
       headers: { authorization: "Bearer good-token" }
     } as unknown as Request;
 
-    verifyToken.mockReturnValue({
+    vi.spyOn(jwtUtils, "verifyToken").mockReturnValue({
       userId: "user-1",
       email: "user@example.com",
       role: "USER"
@@ -115,7 +97,7 @@ describe("adminAuthMiddleware", () => {
       headers: { authorization: "Bearer good-token" }
     } as unknown as Request;
 
-    verifyToken.mockReturnValue({
+    vi.spyOn(jwtUtils, "verifyToken").mockReturnValue({
       userId: "admin-1",
       email: "admin@example.com",
       role: "ADMIN"
@@ -136,5 +118,33 @@ describe("adminAuthMiddleware", () => {
     });
     expect(next).toHaveBeenCalledTimes(1);
     expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it("uses db role as source of truth even when jwt role says admin", async () => {
+    const req = {
+      method: "GET",
+      originalUrl: "/api/admin/wines",
+      ip: "127.0.0.1",
+      headers: { authorization: "Bearer token-with-stale-admin-claim" }
+    } as unknown as Request;
+
+    vi.spyOn(jwtUtils, "verifyToken").mockReturnValue({
+      userId: "user-2",
+      email: "user2@example.com",
+      role: "ADMIN"
+    });
+    findById.mockResolvedValue({
+      id: "user-2",
+      role: "USER"
+    });
+
+    await expect(adminAuthMiddleware(req, {} as Response, vi.fn())).rejects.toEqual(
+      new AppError("Unauthorized", 401)
+    );
+
+    expect(console.warn).toHaveBeenCalledWith(
+      "Admin access denied",
+      expect.objectContaining({ reason: "invalid_role" })
+    );
   });
 });
