@@ -13,6 +13,7 @@ type GoogleTokenInfoResponse = {
   sub?: string;
   email?: string;
   email_verified?: string;
+  exp?: string;
   name?: string;
 };
 
@@ -79,8 +80,11 @@ export class GoogleAuthClient implements IGoogleAuthClient {
 
     const isValidIssuer = payload.iss === "accounts.google.com"
       || payload.iss === "https://accounts.google.com";
+    const tokenExpiry = Number(payload.exp);
+    const nowUnixSeconds = Math.floor(Date.now() / 1000);
+    const hasValidExpiry = Number.isFinite(tokenExpiry) && tokenExpiry > nowUnixSeconds;
 
-    if (!isValidIssuer || payload.aud !== env.GOOGLE_CLIENT_ID) {
+    if (!isValidIssuer || payload.aud !== env.GOOGLE_CLIENT_ID || !hasValidExpiry) {
       throw new AppError("Google token validation failed", 401);
     }
 

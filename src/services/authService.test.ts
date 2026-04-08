@@ -227,6 +227,7 @@ describe("GoogleAuthClient", () => {
   });
 
   it("verifies token info and returns identity", async () => {
+    const exp = `${Math.floor(Date.now() / 1000) + 600}`;
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({
@@ -235,6 +236,7 @@ describe("GoogleAuthClient", () => {
         sub: "google-sub-1",
         email: "user@example.com",
         email_verified: "true",
+        exp,
         name: "User"
       })
     }) as never;
@@ -250,6 +252,7 @@ describe("GoogleAuthClient", () => {
   });
 
   it("supports alternate valid issuer and falls back name to email", async () => {
+    const exp = `${Math.floor(Date.now() / 1000) + 600}`;
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({
@@ -257,7 +260,8 @@ describe("GoogleAuthClient", () => {
         aud: "google-client-id-test",
         sub: "google-sub-1",
         email: "user@example.com",
-        email_verified: "true"
+        email_verified: "true",
+        exp
       })
     }) as never;
 
@@ -284,6 +288,7 @@ describe("GoogleAuthClient", () => {
   });
 
   it("throws when token info has invalid issuer or audience", async () => {
+    const exp = `${Math.floor(Date.now() / 1000) + 600}`;
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({
@@ -291,7 +296,8 @@ describe("GoogleAuthClient", () => {
         aud: "google-client-id-test",
         sub: "google-sub-1",
         email: "user@example.com",
-        email_verified: "true"
+        email_verified: "true",
+        exp
       })
     }) as never;
 
@@ -303,6 +309,7 @@ describe("GoogleAuthClient", () => {
   });
 
   it("throws when token info audience does not match client id", async () => {
+    const exp = `${Math.floor(Date.now() / 1000) + 600}`;
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({
@@ -310,7 +317,8 @@ describe("GoogleAuthClient", () => {
         aud: "different-client-id",
         sub: "google-sub-1",
         email: "user@example.com",
-        email_verified: "true"
+        email_verified: "true",
+        exp
       })
     }) as never;
 
@@ -322,6 +330,7 @@ describe("GoogleAuthClient", () => {
   });
 
   it("throws when required verified identity fields are missing", async () => {
+    const exp = `${Math.floor(Date.now() / 1000) + 600}`;
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({
@@ -329,7 +338,8 @@ describe("GoogleAuthClient", () => {
         aud: "google-client-id-test",
         sub: "google-sub-1",
         email: "user@example.com",
-        email_verified: "false"
+        email_verified: "false",
+        exp
       })
     }) as never;
 
@@ -337,6 +347,46 @@ describe("GoogleAuthClient", () => {
 
     await expect(client.verifyIdToken("id-token")).rejects.toEqual(
       new AppError("Google account is missing required verified identity fields", 401)
+    );
+  });
+
+  it("throws when token is expired", async () => {
+    const exp = `${Math.floor(Date.now() / 1000) - 60}`;
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        iss: "https://accounts.google.com",
+        aud: "google-client-id-test",
+        sub: "google-sub-1",
+        email: "user@example.com",
+        email_verified: "true",
+        exp
+      })
+    }) as never;
+
+    const client = new GoogleAuthClient();
+
+    await expect(client.verifyIdToken("id-token")).rejects.toEqual(
+      new AppError("Google token validation failed", 401)
+    );
+  });
+
+  it("throws when token info payload does not include expiry", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        iss: "https://accounts.google.com",
+        aud: "google-client-id-test",
+        sub: "google-sub-1",
+        email: "user@example.com",
+        email_verified: "true"
+      })
+    }) as never;
+
+    const client = new GoogleAuthClient();
+
+    await expect(client.verifyIdToken("id-token")).rejects.toEqual(
+      new AppError("Google token validation failed", 401)
     );
   });
 });

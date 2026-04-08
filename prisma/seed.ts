@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -131,14 +130,12 @@ async function main() {
     skipDuplicates: true
   });
 
-  const passwordHash = await bcrypt.hash("password123", 10);
-
   await prisma.user.upsert({
     where: { email: "admin@pourhousewineco.com" },
     update: {},
     create: {
       email: "admin@pourhousewineco.com",
-      password: passwordHash,
+      password: null,
       name: "Pourhouse Admin"
     }
   });
