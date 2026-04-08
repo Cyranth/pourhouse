@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import * as adminWineController from '../controllers/adminWineController';
-import { adminAuthMiddleware } from '@/middleware/adminAuthMiddleware';
+import { adminAuthMiddleware } from "@/container";
 
 const router = Router();
 
