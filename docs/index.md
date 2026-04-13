@@ -4,10 +4,11 @@ Use this page as the entry point for project documentation.
 
 ## Start Here
 
-1. [Architecture](architecture.md)
-2. [Environment Configuration](environment.md)
-3. [Database](database.md)
-4. [API Reference](api-reference.md)
+1. [Development Setup](development-setup.md)
+2. [Architecture](architecture.md)
+3. [Environment Configuration](environment.md)
+4. [Database](database.md)
+5. [API Reference](api-reference.md)
 
 ## Integration and Operations
 

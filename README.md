@@ -31,56 +31,14 @@ prisma/
   seed.ts
 ```
 
-## Prerequisites
+## Development Setup
 
-- Node.js 20+
-- PostgreSQL running locally or remotely
-
-## Setup
-
-1. Install dependencies:
-
-```bash
-npm install
-```
-
-2. Create environment file:
-
-```bash
-cp .env.example .env
-```
-
-3. Update `.env` values for your environment.
-
-4. Run database migrations:
-
-```bash
-npx prisma migrate dev
-```
-
-For first deployment (and all non-development environments), use deploy-mode migrations:
-
-```bash
-npx prisma migrate deploy
-```
-
-5. Seed sample data:
-
-```bash
-npm run prisma:seed
-```
-
-6. Start dev server:
-
-```bash
-npm run dev
-```
-
-API runs at `http://localhost:4000` by default.
+For prerequisites, local environment setup, database migration flow, and sample-data seeding, see [Development Setup](docs/development-setup.md).
 
 ## Documentation Index
 
 - [Documentation Home](docs/index.md)
+- [Development Setup](docs/development-setup.md)
 - [Architecture](docs/architecture.md)
 - [Environment Configuration](docs/environment.md)
 - [Database](docs/database.md)
@@ -145,24 +103,6 @@ The API supports a background scheduler that fetches Square catalog data and syn
 - Each run logs start, completion summary (created/updated/skipped/inventoryRowsSynced), and failures.
 
 For detailed integration usage, see [Squarespace Integration Runbook](docs/squarespace-integration.md).
-
-## Sample Data Seeding
-
-Use the combined command when you want realistic demo data in both Square sandbox and your local database:
-
-```bash
-npm run seed:sample:data
-```
-
-This runs three steps in order:
-
-1. `npm run prisma:seed`
-2. `npm run square:seed:sandbox`
-3. `npm run square:sync:wines`
-
-When `sample_data/*.xlsx` exists, `npm run square:seed:sandbox` reads the newest workbook and seeds catalog items from the `Items` sheet. If no workbook is found, it falls back to bundled sample fixtures.
-
-You can also run individual steps as needed.
 
 ## API and Rules
 
