@@ -1,0 +1,83 @@
+<script>
+(function() {
+  const root = document.getElementById('pourhouse-display-root');
+  const CLOUD_RUN_URL = 'https://pourhouse-779220128919.europe-west1.run.app';
+  const API_ENDPOINT = `${CLOUD_RUN_URL}/api/wines`;
+
+  async function fetchWines() {
+    try {
+      const response = await fetch(API_ENDPOINT);
+      console.log('Pourhouse Sync Response:', response);
+      if (!response.ok) {
+        throw new Error(`Server responded with status ${response.status}`);
+      }
+
+      const groupedData = await response.json();
+
+      // If the data comes back empty
+      if (!groupedData || Object.keys(groupedData).length === 0) {
+        root.innerHTML = "<p>Our wine list is being updated. Check back shortly!</p>";
+        return;
+      }
+
+      let html = '';
+
+      // Loop through categories (Red, White, etc.)
+      for (const [category, wines] of Object.entries(groupedData)) {
+        html += `<h2 class="ph-category-title">${category}</h2>`;
+        html += '<div class="ph-grid">';
+
+        wines.forEach(wine => {
+          html += `
+            <div class="ph-wine-card">
+              <div class="ph-header">
+                <span class="ph-name">${wine.name}</span>
+                <span class="ph-price">$${wine.price}</span>
+              </div>
+              <div class="ph-meta">${wine.varietal || ''} — ${wine.region || ''}</div>
+              <p class="ph-desc">${wine.notes || ''}</p>
+            </div>
+          `;
+        });
+        html += '</div>';
+      }
+
+      root.innerHTML = html;
+    } catch (err) {
+      console.error('Pourhouse Sync Error:', err);
+      // Displaying the specific error helps us debug
+      root.innerHTML = `<p style="color: grey;">Our live list is currently resting. (Error: ${err.message})</p>`;
+    }
+  }
+
+  fetchWines();
+})();
+</script>
+
+<style>
+  .ph-category-title {
+    border-bottom: 2px solid #4a0e0e;
+    margin: 40px 0 20px 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 1.5rem;
+  }
+  .ph-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+  @media (min-width: 768px) {
+    .ph-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .ph-wine-card { padding: 10px 0; }
+  .ph-header {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+  .ph-name { color: #4a0e0e; }
+  .ph-meta { font-style: italic; color: #666; font-size: 0.9rem; margin-bottom: 5px; }
+  .ph-desc { font-size: 0.95rem; }
+</style>
